@@ -10,7 +10,8 @@ class UserRepository(
 ) {
     suspend fun login(account: String, password: String): Result<LoginResponse> {
         return Result.safeApiCall {
-            api.login(mapOf("account" to account, "password" to password)).getOrThrow()
+            api.login(mapOf("account" to account, "password" to password))
+                .getOrThrow()
         }
     }
 
