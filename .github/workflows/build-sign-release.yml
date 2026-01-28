@@ -1,0 +1,235 @@
+name: Build, Sign & Release
+
+on:
+  # 开发版本: 每次 push 到 main 分支触发
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'CLAUDE.md'
+
+  # 生产版本: 发布 release 时触发
+  release:
+    types: [published]
+
+  # 版本构建: push 标签 v* 时触发 (如 v1.0.0)
+  push:
+    tags:
+      - 'v*'
+
+env:
+  APP_NAME: Kaiqiu
+  JAVA_VERSION: 17
+
+jobs:
+  build:
+    name: Build & Sign
+    runs-on: ubuntu-latest
+
+    outputs:
+      version-name: ${{ steps.version.outputs.version-name }}
+      is-release: ${{ steps.version.outputs.is-release }}
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. 获取版本信息
+      - name: Get version info
+        id: version
+        run: |
+          # 从 gradle 获取版本名
+          VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts || echo "1.0.0")
+          VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K\d+' app/build.gradle.kts || echo "1")
+          echo "version-name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "version-code=$VERSION_CODE" >> $GITHUB_OUTPUT
+
+          # 判断是否为 release 构建
+          IS_RELEASE=false
+          if [[ "${{ github.ref }}" == "refs/tags/v"* ]] || [[ "${{ github.event_name }}" == "release" ]]; then
+            IS_RELEASE=true
+          fi
+          echo "is-release=$IS_RELEASE" >> $GITHUB_OUTPUT
+
+          echo "版本名: $VERSION_NAME"
+          echo "版本号: $VERSION_CODE"
+          echo "Release 构建: $IS_RELEASE"
+
+      # 3. 设置 Java
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      # 4. 设置 Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 36
+
+      # 5. 生成 changelog
+      - name: Generate changelog
+        id: changelog
+        if: steps.version.outputs.is-release == 'true'
+        run: |
+          # 获取上一个 tag 作为 changelog 起点
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            # 如果没有上一个 tag，使用首次提交
+            PREV_TAG=$(git rev-list --max-parents=0 HEAD | cut -c1-7)
+          fi
+
+          echo "从 $PREV_TAG 生成 changelog..."
+
+          # 生成 changelog
+          CHANGELOG=$(git log $PREV_TAG..HEAD --oneline --format="%h %s" --reverse | sed 's/^/• /')
+          CHANGELOG="${CHANGELOG//'%'/'%25'}"
+          CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+          CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+          echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
+
+          # 输出到文件供后续使用
+          git log $PREV_TAG..HEAD --oneline --reverse > CHANGELOG.txt
+
+      # 6. 恢复签名密钥
+      - name: Restore signing key
+        if: steps.version.outputs.is-release == 'true'
+        id: restore-signing-key
+        uses: actions/download-artifact@v4
+        with:
+          name: signing-key
+          path: app/
+        env:
+          # 从 Secrets 获取 Base64 编码的 keystore
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "还原签名密钥..."
+            echo "$KEYSTORE_BASE64" | base64 -d > app/keystore.jks
+            # 更新 keystore.properties
+            cat > app/keystore.properties << EOF
+storeFile=keystore.jks
+storePassword=$KEYSTORE_PASSWORD
+keyAlias=$KEY_ALIAS
+keyPassword=$KEY_PASSWORD
+EOF
+            echo "密钥还原成功"
+          else
+            echo "警告: 未配置签名密钥，release 构建将跳过签名"
+          fi
+
+      # 7. 构建 Debug APK
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      # 8. 构建 Release APK (如果配置了签名)
+      - name: Build Release APK
+        if: steps.version.outputs.is-release == 'true'
+        run: ./gradlew assembleRelease --no-daemon
+
+      # 9. 上传构建产物
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/
+
+      - name: Upload Release APK
+        if: steps.version.outputs.is-release == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/
+
+      - name: Upload Changelog
+        if: steps.version.outputs.is-release == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: CHANGELOG.txt
+
+  release:
+    name: Create Release
+    needs: build
+    if: needs.build.outputs.is-release == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: debug-apk
+          path: debug/
+
+      - name: Download Release APK
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk
+          path: release/
+
+      - name: Download Changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog
+          path: .
+
+      # 创建 GitHub Release
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ env.APP_NAME }} ${{ github.ref_name }}
+          body_path: CHANGELOG.txt
+          draft: false
+          prerelease: false
+
+      # 上传 APK 到 Release
+      - name: Upload Release APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: release/app-release.apk
+          asset_name: ${{ env.APP_NAME }}-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      # 上传 Debug APK 到 Release
+      - name: Upload Debug APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: debug/app-debug.apk
+          asset_name: ${{ env.APP_NAME }}-${{ github.ref_name }}-debug.apk
+          asset_content_type: application/vnd.android.package-archive
+
+  upload-artifacts:
+    name: Upload Artifacts (Development)
+    needs: build
+    # 只在 push 到 main 分支时执行（不是 release 或 tag）
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.outputs.is-release != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: debug-apk
+          path: debug/
+
+      - name: Upload to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-debug-${{ github.sha }}
+          path: debug/
+          retention-days: 7

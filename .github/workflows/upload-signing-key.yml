@@ -1,0 +1,33 @@
+name: Upload Signing Key
+
+# 手动触发：用于上传签名密钥
+on:
+  workflow_dispatch:
+    inputs:
+      keystore_base64:
+        description: 'Base64 encoded keystore'
+        required: true
+      keystore_password:
+        description: 'Keystore password'
+        required: true
+      key_alias:
+        description: 'Key alias'
+        required: true
+      key_password:
+        description: 'Key password'
+        required: true
+
+jobs:
+  upload:
+    name: Upload Signing Key
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save signing key
+        run: |
+          echo "${{ inputs.keystore_base64 }}" | base64 -d > app/keystore.jks
+
+      - name: Upload signing key
+        uses: actions/upload-artifact@v4
+        with:
+          name: signing-key
+          path: app/keystore.jsk
