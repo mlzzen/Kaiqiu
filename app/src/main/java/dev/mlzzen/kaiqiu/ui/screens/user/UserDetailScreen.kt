@@ -697,7 +697,7 @@ private fun ScoreTrendChart(scoreHistory: List<ScoreHistory>, modifier: Modifier
                         )
                     }
 
-                    // 绘制数据点和数值
+                    // 绘制数据点
                     scores.forEachIndexed { index, score ->
                         val x = paddingLeft + index * stepX
                         val y = height - paddingBottom - ((score - minScore) / scoreRange * chartHeight)
@@ -705,26 +705,85 @@ private fun ScoreTrendChart(scoreHistory: List<ScoreHistory>, modifier: Modifier
                         // 绘制数据点
                         drawCircle(
                             color = Color.White,
-                            radius = 7f,
+                            radius = 5f,
                             center = Offset(x, y)
                         )
                         drawCircle(
                             color = primaryColor,
-                            radius = 5f,
+                            radius = 3f,
                             center = Offset(x, y)
                         )
+                    }
 
-                        // 绘制数值标签
-                        val valueText = score.toString()
-                        val valueResult = textMeasurer.measure(
-                            text = valueText,
-                            style = TextStyle(fontSize = 10.sp, color = primaryColor, fontWeight = FontWeight.Bold)
+                    // 只绘制最高点和最低点的数值
+                    if (scores.isNotEmpty()) {
+                        val maxScoreValue = scores.maxOrNull() ?: return@Canvas
+                        val minScoreValue = scores.minOrNull() ?: return@Canvas
+                        val maxIndex = scores.indexOf(maxScoreValue)
+                        val minIndex = scores.indexOf(minScoreValue)
+
+                        // 最高点
+                        val maxX = paddingLeft + maxIndex * stepX
+                        val maxY = height - paddingBottom - ((maxScoreValue - minScore) / scoreRange * chartHeight)
+                        // 绘制最高点数据点（稍大）
+                        drawCircle(
+                            color = Color(0xFFFF6B6B),
+                            radius = 7f,
+                            center = Offset(maxX, maxY)
+                        )
+                        drawCircle(
+                            color = Color.White,
+                            radius = 5f,
+                            center = Offset(maxX, maxY)
+                        )
+                        drawCircle(
+                            color = Color(0xFFFF6B6B),
+                            radius = 3f,
+                            center = Offset(maxX, maxY)
+                        )
+                        // 最高点数值
+                        val maxText = maxScoreValue.toString()
+                        val maxTextResult = textMeasurer.measure(
+                            text = maxText,
+                            style = TextStyle(fontSize = 11.sp, color = Color(0xFFFF6B6B), fontWeight = FontWeight.Bold)
                         )
                         drawText(
                             textMeasurer = textMeasurer,
-                            text = valueText,
-                            topLeft = Offset(x - valueResult.size.width / 2, y - valueResult.size.height - 12f),
-                            style = TextStyle(fontSize = 10.sp, color = primaryColor, fontWeight = FontWeight.Bold)
+                            text = maxText,
+                            topLeft = Offset(maxX - maxTextResult.size.width / 2, maxY - maxTextResult.size.height - 14f),
+                            style = TextStyle(fontSize = 11.sp, color = Color(0xFFFF6B6B), fontWeight = FontWeight.Bold)
+                        )
+
+                        // 最低点
+                        val minX = paddingLeft + minIndex * stepX
+                        val minY = height - paddingBottom - ((minScoreValue - minScore) / scoreRange * chartHeight)
+                        // 绘制最低点数据点（稍大）
+                        drawCircle(
+                            color = Color(0xFF4DABF7),
+                            radius = 7f,
+                            center = Offset(minX, minY)
+                        )
+                        drawCircle(
+                            color = Color.White,
+                            radius = 5f,
+                            center = Offset(minX, minY)
+                        )
+                        drawCircle(
+                            color = Color(0xFF4DABF7),
+                            radius = 3f,
+                            center = Offset(minX, minY)
+                        )
+                        // 最低点数值
+                        val minText = minScoreValue.toString()
+                        val minTextResult = textMeasurer.measure(
+                            text = minText,
+                            style = TextStyle(fontSize = 11.sp, color = Color(0xFF4DABF7), fontWeight = FontWeight.Bold)
+                        )
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            text = minText,
+                            topLeft = Offset(minX - minTextResult.size.width / 2, minY - minTextResult.size.height - 14f),
+                            style = TextStyle(fontSize = 11.sp, color = Color(0xFF4DABF7), fontWeight = FontWeight.Bold)
                         )
                     }
                 }
