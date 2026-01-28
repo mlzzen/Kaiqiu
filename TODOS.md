@@ -40,9 +40,9 @@
 
 ## 阶段三：状态管理迁移
 
-- [ ] 3.1 创建 UserRepository
-- [ ] 3.2 创建 AppDataStore (DataStore 持久化存储)
-- [ ] 3.3 迁移 Pinia user store (store/modules/user.js)
+- [x] 3.1 创建 AppDataStore (DataStore 持久化存储)
+- [x] 3.2 迁移 Pinia user store -> UserState
+- [x] 3.3 创建 UserRepository (业务层仓库)
 
 ---
 
