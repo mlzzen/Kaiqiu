@@ -17,6 +17,7 @@ import dev.mlzzen.kaiqiu.ui.screens.profile.AboutScreen
 import dev.mlzzen.kaiqiu.ui.screens.profile.CitySelectScreen
 import dev.mlzzen.kaiqiu.ui.screens.profile.ProfileScreen
 import dev.mlzzen.kaiqiu.ui.screens.search.SearchScreen
+import dev.mlzzen.kaiqiu.ui.screens.search.TopSearchScreen
 import dev.mlzzen.kaiqiu.ui.screens.user.FollowedPlayersScreen
 import dev.mlzzen.kaiqiu.ui.screens.user.UserDetailScreen
 import dev.mlzzen.kaiqiu.ui.screens.user.UserEventsScreen
@@ -80,6 +81,18 @@ fun KaiqiuNavHost(
                 },
                 onNavigateToUser = { uid ->
                     navController.navigate(Screen.UserDetail.createRoute(uid))
+                }
+            )
+        }
+
+        composable(Screen.TopSearch.route) {
+            TopSearchScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToRank = {
+                    navController.navigate(Screen.Rank.route)
+                },
+                onNavigateToTop100 = { tid, name ->
+                    navController.navigate(Screen.Top100.route)
                 }
             )
         }

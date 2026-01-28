@@ -64,7 +64,7 @@
 
 ### 4.4 搜索模块
 - [x] 4.4.1 迁移 search/searchIndex.vue → SearchScreen.kt
-- [ ] 4.4.2 迁移 search/topSearch.vue → TopSearchScreen.kt
+- [x] 4.4.2 迁移 search/topSearch.vue → TopSearchScreen.kt
 - [ ] 4.4.3 迁移 search/top100Data.vue → Top100Screen.kt
 - [ ] 4.4.4 迁移 search/rank.vue → RankScreen.kt
 - [ ] 4.4.5 迁移 search/gym.vue → GymScreen.kt

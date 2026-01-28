@@ -194,11 +194,23 @@ data class SignResponse(
 )
 
 /**
+ * Top 列表项
+ */
+data class TopItem(
+    @SerializedName("tid")
+    val tid: String,
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("viewnum")
+    val viewnum: String?
+)
+
+/**
  * Top 列表响应
  */
 data class TopListResponse(
     @SerializedName("list")
-    val list: List<UserItem>,
+    val list: List<TopItem>,
     @SerializedName("total")
     val total: Int
 )
