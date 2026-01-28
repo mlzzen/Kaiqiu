@@ -1,6 +1,12 @@
 package dev.mlzzen.kaiqiu.ui.screens.home
 
-import android.widget.Toast
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,24 +26,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import dev.mlzzen.kaiqiu.data.datastore.AppDataStore
 import dev.mlzzen.kaiqiu.data.datastore.CityData
 import dev.mlzzen.kaiqiu.data.remote.EventItem
 import dev.mlzzen.kaiqiu.data.remote.HttpClient
 import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.net.URLEncoder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToSearch: () -> Unit,
     onNavigateToEvent: (String) -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onNavigateToCitySelect: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -48,11 +52,64 @@ fun HomeScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var selectedCity by remember { mutableStateOf(CityData("1", "北京市")) }
 
+    // 获取当前城市
+    @SuppressLint("MissingPermission")
+    fun getCurrentLocation(onLocationObtained: (lat: String, lng: String) -> Unit) {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+        if (location != null) {
+            onLocationObtained(location.latitude.toString(), location.longitude.toString())
+        } else {
+            // 如果无法获取位置，使用默认
+            onLocationObtained("39.9042", "116.4074")
+        }
+    }
+
+    // 权限请求
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            getCurrentLocation { lat, lng ->
+                scope.launch {
+                    // 保存位置到 DataStore
+                    dataStore.setLocation("""["$lng","$lat"]""")
+                }
+            }
+        }
+    }
+
+    // 检查并请求位置权限
+    fun checkLocationPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                getCurrentLocation { lat, lng ->
+                    scope.launch {
+                        dataStore.setLocation("""["$lng","$lat"]""")
+                    }
+                }
+            }
+            else -> {
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+    }
+
     // 加载城市选择
     LaunchedEffect(Unit) {
         dataStore.selectCityFlow.collect { city ->
             selectedCity = city
         }
+    }
+
+    // 启动时自动定位
+    LaunchedEffect(Unit) {
+        checkLocationPermission()
     }
 
     // 加载比赛列表
@@ -61,12 +118,22 @@ fun HomeScreen(
             isLoading = true
             error = null
             try {
-                // 使用固定位置作为示例，实际应该获取用户位置
+                val locationJson = dataStore.getLocationSync()
+                val (lng, lat) = if (locationJson.isNullOrBlank()) {
+                    "116.4074" to "39.9042"
+                } else {
+                    try {
+                        val loc = locationJson.removeSurrounding("[\"", "\"]").split("\",\"")
+                        if (loc.size == 2) loc[0] to loc[1] else "116.4074" to "39.9042"
+                    } catch (e: Exception) {
+                        "116.4074" to "39.9042"
+                    }
+                }
                 val response = HttpClient.api.getMatchListByPage(
                     mapOf(
                         "city" to selectedCity.name,
-                        "lat" to "39.9042",
-                        "lng" to "116.4074",
+                        "lat" to lat,
+                        "lng" to lng,
                         "page" to "1",
                         "sort" to "4"
                     )
@@ -91,7 +158,39 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("开球网") },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("开球网")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // 城市选择按钮
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable { onNavigateToCitySelect() }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.LocationOn,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = Color(0xFF39B54A)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                selectedCity.name,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF39B54A)
+                            )
+                            Icon(
+                                Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = Color(0xFF39B54A)
+                            )
+                        }
+                    }
+                },
                 actions = {
                     IconButton(onClick = onNavigateToSearch) {
                         Icon(Icons.Default.Search, contentDescription = "搜索")
@@ -105,59 +204,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 城市选择栏
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                onClick = { /* TODO: 跳转到城市选择 */ }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFF77B980))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(selectedCity.name)
-                    Spacer(modifier = Modifier.weight(1f))
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
-                }
-            }
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            // 快捷入口
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                QuickActionChip(
-                    icon = Icons.Default.Star,
-                    label = "赛事",
-                    onClick = { onNavigateToSearch() }
-                )
-                QuickActionChip(
-                    icon = Icons.Default.Star,
-                    label = "排行",
-                    onClick = { onNavigateToSearch() }
-                )
-                QuickActionChip(
-                    icon = Icons.Default.Star,
-                    label = "球馆",
-                    onClick = { onNavigateToSearch() }
-                )
-                QuickActionChip(
-                    icon = Icons.Default.Star,
-                    label = "比赛",
-                    onClick = { onNavigateToSearch() }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "近期比赛",
@@ -254,7 +301,7 @@ private fun EventCard(
             // 赛事海报
             Box {
                 AsyncImage(
-                    model = event.poster?.let { encodeUrl(it) },
+                    model = event.poster?.let { if (!it.startsWith("http")) "https:$it" else it },
                     contentDescription = event.title,
                     modifier = Modifier
                         .width(100.dp)
@@ -341,34 +388,5 @@ private fun EventCard(
                 }
             }
         }
-    }
-}
-
-private fun encodeUrl(url: String): String {
-    return try {
-        if (!url.startsWith("http")) "https:${url}" else url
-    } catch (e: Exception) {
-        url
-    }
-}
-
-@Composable
-private fun QuickActionChip(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
-    ) {
-        FilledTonalIconButton(
-            onClick = onClick,
-            modifier = Modifier.size(48.dp)
-        ) {
-            Icon(icon, contentDescription = label)
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(label, style = MaterialTheme.typography.bodySmall)
     }
 }

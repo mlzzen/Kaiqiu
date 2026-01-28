@@ -56,7 +56,10 @@ fun KaiqiuNavHost(
                 onNavigateToEvent = { eventid ->
                     navController.navigate(Screen.EventDetail.createRoute(eventid))
                 },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToCitySelect = {
+                    navController.navigate(Screen.CitySelect.route)
+                }
             )
         }
 

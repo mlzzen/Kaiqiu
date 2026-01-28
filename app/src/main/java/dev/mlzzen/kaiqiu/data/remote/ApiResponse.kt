@@ -45,8 +45,10 @@ data class LoginResponse(
 data class UserInfo(
     @SerializedName("uid")
     val uid: String,
-    @SerializedName("avatar")
-    val avatar: String?,
+    @SerializedName("image")
+    val image: String?,
+    @SerializedName("username")
+    val username: String?,
     @SerializedName("nickname")
     val nickname: String?,
     @SerializedName("realname")
@@ -54,7 +56,13 @@ data class UserInfo(
     @SerializedName("sex")
     val sex: String?,
     @SerializedName("city")
-    val city: String?
+    val city: String?,
+    @SerializedName("score")
+    val score: String?,
+    @SerializedName("credit")
+    val credit: String?,
+    @SerializedName("gold")
+    val gold: String?
 )
 
 /**

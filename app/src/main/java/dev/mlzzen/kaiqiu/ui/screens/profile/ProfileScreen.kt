@@ -1,10 +1,11 @@
 package dev.mlzzen.kaiqiu.ui.screens.profile
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
@@ -12,8 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import dev.mlzzen.kaiqiu.ui.state.LocalUserState
 import dev.mlzzen.kaiqiu.ui.state.UserState
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -58,25 +64,78 @@ fun ProfileScreen(
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Surface(
-                            modifier = Modifier.size(64.dp),
-                            shape = MaterialTheme.shapes.large,
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(40.dp))
+                        // 头像
+                        if (isLoggedIn && !userInfo?.image.isNullOrEmpty()) {
+                            AsyncImage(
+                                model = userInfo?.image?.let { if (!it.startsWith("http")) "https:$it" else it },
+                                contentDescription = "头像",
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(MaterialTheme.shapes.large),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Surface(
+                                modifier = Modifier.size(64.dp),
+                                shape = MaterialTheme.shapes.large,
+                                color = MaterialTheme.colorScheme.primaryContainer
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(40.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
                             }
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(userInfo?.nickname ?: "未登录", style = MaterialTheme.typography.titleMedium)
-                            Text(if (isLoggedIn) cityName else "点击登录", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = if (isLoggedIn) userInfo?.username ?: userInfo?.nickname ?: userInfo?.realname ?: "用户" else "未登录",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = if (isLoggedIn) cityName else "点击登录",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         if (isLoggedIn) {
                             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
                         }
                     }
                 }
+            }
+
+            // 用户积分信息
+            if (isLoggedIn) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        UserStatCard(
+                            label = "当前积分",
+                            value = userInfo?.score ?: "0",
+                            modifier = Modifier.weight(1f)
+                        )
+                        UserStatCard(
+                            label = "当前金币",
+                            value = userInfo?.gold ?: "0",
+                            modifier = Modifier.weight(1f)
+                        )
+                        UserStatCard(
+                            label = "我的信用",
+                            value = userInfo?.credit ?: "0",
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
@@ -125,6 +184,40 @@ fun ProfileScreen(
             }
 
             item { Spacer(modifier = Modifier.height(32.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun UserStatCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF5F9FD)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1677FF)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
         }
     }
 }

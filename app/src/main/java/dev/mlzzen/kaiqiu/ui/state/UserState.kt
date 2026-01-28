@@ -72,10 +72,35 @@ class UserState(
 
     init {
         scope.launch {
+            // 先同步检查是否有已保存的 token
+            val savedToken = dataStore.getTokenSync()
+            if (!savedToken.isNullOrBlank()) {
+                _token.value = savedToken
+                _isLoggedIn.value = true
+                HttpClient.setAuthToken(savedToken)
+                // 同步检查是否有缓存的用户信息
+                val savedUserInfo = dataStore.getUserInfoSync()
+                if (!savedUserInfo.isNullOrBlank()) {
+                    try {
+                        _userInfo.value = gson.fromJson(savedUserInfo, UserInfo::class.java)
+                    } catch (e: Exception) {
+                        // 如果没有缓存的用户信息，尝试从 API 获取
+                        refreshUserInfo()
+                    }
+                } else {
+                    // 没有缓存用户信息，从 API 获取
+                    refreshUserInfo()
+                }
+            }
+        }
+
+        scope.launch {
             dataStore.tokenFlow.collect { token ->
                 _token.value = token
                 _isLoggedIn.value = !token.isNullOrBlank()
-                token?.let { HttpClient.setAuthToken(it) }
+                token?.let {
+                    HttpClient.setAuthToken(it)
+                }
             }
         }
 

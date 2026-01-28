@@ -45,6 +45,15 @@ class AppDataStore(private val context: Context) {
         }
     }
 
+    // 同步获取位置
+    fun getLocationSync(): String? = runBlocking(Dispatchers.IO) {
+        try {
+            dataStore.data.first()[KEY_LOCATION]
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     // ============ Token ============
 
     val tokenFlow: Flow<String?> = dataStore.data
@@ -96,6 +105,15 @@ class AppDataStore(private val context: Context) {
             } else {
                 preferences.remove(KEY_USER_INFO)
             }
+        }
+    }
+
+    // 同步获取用户信息
+    fun getUserInfoSync(): String? = runBlocking(Dispatchers.IO) {
+        try {
+            dataStore.data.first()[KEY_USER_INFO]
+        } catch (e: Exception) {
+            null
         }
     }
 
