@@ -54,7 +54,9 @@ sealed class Screen(
     data object TopSearch : Screen("top_search", "排行榜")
     data object Top100 : Screen("top100", "Top100")
     data object Rank : Screen("rank", "排行")
-    data object Gym : Screen("gym", "球馆")
+    data object Gym : Screen("gym/{arenaid}", "球馆") {
+        fun createRoute(arenaid: String) = "gym/$arenaid"
+    }
     data object CitySelect : Screen("city_select", "城市选择")
 
     // About

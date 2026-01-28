@@ -67,7 +67,7 @@
 - [x] 4.4.2 迁移 search/topSearch.vue → TopSearchScreen.kt
 - [x] 4.4.3 迁移 search/top100Data.vue → Top100Screen.kt
 - [x] 4.4.4 迁移 search/rank.vue → RankScreen.kt
-- [ ] 4.4.5 迁移 search/gym.vue → GymScreen.kt
+- [x] 4.4.5 迁移 search/gym.vue → GymScreen.kt
 
 ### 4.5 赛事模块
 - [x] 4.5.1 迁移 event/eventMain.vue → EventListScreen.kt

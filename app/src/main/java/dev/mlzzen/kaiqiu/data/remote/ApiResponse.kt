@@ -154,7 +154,21 @@ data class EventItem(
     @SerializedName("arena")
     val arena: String?,
     @SerializedName("img")
-    val img: String?
+    val img: String?,
+    @SerializedName("city")
+    val city: String?,
+    @SerializedName("status")
+    val status: String?,
+    @SerializedName("poster")
+    val poster: String?,
+    @SerializedName("arena_name")
+    val arenaName: String?,
+    @SerializedName("viewnum")
+    val viewnum: String?,
+    @SerializedName("membernum")
+    val membernum: String?,
+    @SerializedName("grade")
+    val grade: String?
 )
 
 /**
@@ -277,8 +291,16 @@ data class ArenaDetail(
     val name: String?,
     @SerializedName("address")
     val address: String?,
+    @SerializedName("lat")
+    val lat: String?,
+    @SerializedName("lng")
+    val lng: String?,
     @SerializedName("phone")
     val phone: String?,
+    @SerializedName("contact")
+    val contact: String?,
+    @SerializedName("intro")
+    val intro: String?,
     @SerializedName("images")
     val images: List<String>?
 )
