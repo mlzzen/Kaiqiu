@@ -351,6 +351,28 @@ data class MatchListResponse(
 )
 
 /**
+ * 参赛记录列表响应
+ * API 返回结构: {"code":1,"data":{"total":3,"per_page":10,"current_page":1,"last_page":1,"data":[...]}}
+ */
+data class EventHistoryResponse(
+    @SerializedName("data")
+    val data: EventHistoryData
+)
+
+data class EventHistoryData(
+    @SerializedName("total")
+    val total: Int,
+    @SerializedName("per_page")
+    val perPage: Int,
+    @SerializedName("current_page")
+    val currentPage: Int,
+    @SerializedName("last_page")
+    val lastPage: Int,
+    @SerializedName("data")
+    val data: List<EventHistory>
+)
+
+/**
  * 游戏 ID 响应
  */
 data class GameIdResponse(

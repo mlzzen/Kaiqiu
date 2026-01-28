@@ -30,7 +30,7 @@ interface ApiService {
     ): ApiResponse<List<GameRecord>>
 
     @POST("center/events")
-    suspend fun getMatchListHisByPage(@Body body: Map<String, String>): ApiResponse<List<EventHistory>>
+    suspend fun getMatchListHisByPage(@Body body: Map<String, String>): ApiResponse<EventHistoryResponse>
 
     @GET("User/followee")
     suspend fun goFolloweeByUid(@Query("uid") uid: String): ApiResponse<Unit>
