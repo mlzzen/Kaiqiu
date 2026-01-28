@@ -515,6 +515,8 @@ data class EventDetail(
     val eventid: String,
     @SerializedName("title")
     val title: String?,
+    @SerializedName("username")
+    val username: String?,
     @SerializedName("starttime")
     val starttime: String?,
     @SerializedName("endtime")
@@ -534,7 +536,25 @@ data class EventDetail(
     @SerializedName("lat")
     val lat: String?,
     @SerializedName("lng")
-    val lng: String?
+    val lng: String?,
+    @SerializedName("startenrolltime")
+    val startenrolltime: String?,
+    @SerializedName("deadline")
+    val deadline: String?,
+    @SerializedName("weixin")
+    val weixin: String?,
+    @SerializedName("note")
+    val note: String?,
+    @SerializedName("detail")
+    val detail: String?,
+    @SerializedName("tagid")
+    val tagid: String?,
+    @SerializedName("shopid")
+    val shopid: String?,
+    @SerializedName("membernum")
+    val membernum: String?,
+    @SerializedName("viewnum")
+    val viewnum: String?
 )
 
 /**

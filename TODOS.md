@@ -72,6 +72,7 @@
 - [x] 4.5.1 迁移 event/eventMain.vue → EventListScreen.kt
 - [x] 4.5.2 迁移 event/memberList.vue → EventMembersScreen.kt
 - [x] 4.5.3 迁移 event/components/* → Event 组件
+- [x] 4.5.4 修复 EventDetailScreen 赛事信息显示问题（添加 detail 字段支持）
 
 ### 4.6 比赛模块
 - [x] 4.6.1 迁移 match/matchInfo.vue → MatchDetailScreen.kt
