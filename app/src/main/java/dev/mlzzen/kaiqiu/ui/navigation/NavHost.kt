@@ -223,7 +223,10 @@ fun KaiqiuNavHost(
                 eventid = eventid,
                 matchId = matchId,
                 itemId = itemId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUser = { uid ->
+                    navController.navigate(Screen.UserDetail.createRoute(uid))
+                }
             )
         }
 

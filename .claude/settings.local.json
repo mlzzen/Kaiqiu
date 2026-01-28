@@ -12,7 +12,9 @@
       "Bash(adb logcat:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(.gradlew.bat:*)",
+      "Bash(D:/workspace/Kaiqiu/gradlew.bat assembleDebug)"
     ]
   }
 }

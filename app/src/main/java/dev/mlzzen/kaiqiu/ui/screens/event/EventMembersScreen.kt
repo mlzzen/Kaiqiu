@@ -31,7 +31,8 @@ fun EventMembersScreen(
     eventid: String,
     matchId: String,
     itemId: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToUser: (String) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -176,7 +177,13 @@ fun EventMembersScreen(
                     MemberRow(
                         index = index + 1,
                         member = member,
-                        onClick = { /* TODO: 跳转到用户详情 */ }
+                        onClick = {
+                            member.uid?.let { uid ->
+                                if (uid.isNotEmpty()) {
+                                    onNavigateToUser(uid)
+                                }
+                            }
+                        }
                     )
                     HorizontalDivider()
                 }
