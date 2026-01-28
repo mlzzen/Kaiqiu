@@ -73,6 +73,9 @@ fun KaiqiuNavHost(
                 onNavigateToUserDetail = { uid ->
                     navController.navigate(Screen.UserDetail.createRoute(uid))
                 },
+                onNavigateToUserEvents = { uid ->
+                    navController.navigate(Screen.UserEvents.createRoute(uid))
+                },
                 onNavigateToCitySelect = {
                     navController.navigate(Screen.CitySelect.route)
                 },

@@ -1,11 +1,9 @@
 package dev.mlzzen.kaiqiu.ui.screens.profile
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
@@ -29,6 +27,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 fun ProfileScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToUserDetail: (String) -> Unit,
+    onNavigateToUserEvents: (String) -> Unit,
     onNavigateToCitySelect: () -> Unit,
     onNavigateToAbout: () -> Unit
 ) {
@@ -37,8 +36,6 @@ fun ProfileScreen(
     val userInfo by userState.userInfo.collectAsState()
     val isLoggedIn by userState.isLoggedIn.collectAsState()
     val cityName = userState.cityName
-
-    android.util.Log.d("ProfileDebug", "ProfileScreen: isLoggedIn=$isLoggedIn, userInfo=$userInfo")
 
     Scaffold(
         topBar = {
@@ -54,10 +51,7 @@ fun ProfileScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
-                        .clickable(enabled = isLoggedIn) {
-                            userInfo?.uid?.let { uid -> onNavigateToUserDetail(uid) }
-                        },
+                        .padding(16.dp),
                     onClick = { if (!isLoggedIn) onNavigateToLogin() }
                 ) {
                     Row(
@@ -66,16 +60,42 @@ fun ProfileScreen(
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // 头像
-                        if (isLoggedIn && !userInfo?.image.isNullOrEmpty()) {
-                            AsyncImage(
-                                model = userInfo?.image?.let { if (!it.startsWith("http")) "https:$it" else it },
-                                contentDescription = "头像",
+                        // 头像（点击进入用户详情）
+                        if (isLoggedIn) {
+                            Box(
                                 modifier = Modifier
                                     .size(64.dp)
-                                    .clip(MaterialTheme.shapes.large),
-                                contentScale = ContentScale.Crop
-                            )
+                                    .clip(MaterialTheme.shapes.large)
+                                    .clickable {
+                                        userInfo?.uid?.let { onNavigateToUserDetail(it) }
+                                    }
+                            ) {
+                                if (!userInfo?.image.isNullOrEmpty()) {
+                                    AsyncImage(
+                                        model = userInfo?.image?.let {
+                                            if (!it.startsWith("http")) "https:$it" else it
+                                        },
+                                        contentDescription = "头像",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Surface(
+                                        modifier = Modifier.fillMaxSize(),
+                                        shape = MaterialTheme.shapes.large,
+                                        color = MaterialTheme.colorScheme.primaryContainer
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                Icons.Default.Person,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(40.dp),
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         } else {
                             Surface(
                                 modifier = Modifier.size(64.dp),
@@ -95,7 +115,8 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (isLoggedIn) userInfo?.username ?: userInfo?.nickname ?: userInfo?.realname ?: "用户" else "未登录",
+                                text = if (isLoggedIn) userInfo?.username ?: userInfo?.nickname
+                                    ?: userInfo?.realname ?: "用户" else "未登录",
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
@@ -105,7 +126,10 @@ fun ProfileScreen(
                             )
                         }
                         if (isLoggedIn) {
-                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                            Icon(
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = null
+                            )
                         }
                     }
                 }
@@ -147,7 +171,9 @@ fun ProfileScreen(
                     title = "常用",
                     items = listOf(
                         MenuItem(Icons.Default.LocationOn, "城市选择", cityName, onNavigateToCitySelect),
-                        MenuItem(Icons.Default.Star, "我的参赛", "查看参赛记录", { userInfo?.uid?.let { onNavigateToUserDetail(it) } }),
+                        MenuItem(Icons.Default.Star, "我的参赛", "查看参赛记录", {
+                            userInfo?.uid?.let { onNavigateToUserEvents(it) }
+                        }),
                         MenuItem(Icons.Default.Favorite, "我的关注", "关注的球友", {})
                     )
                 )

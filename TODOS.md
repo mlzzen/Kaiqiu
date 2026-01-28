@@ -3,7 +3,7 @@
 将 `kaiqiu-app-uni` uni-app 项目迁移到 Android Kotlin Compose 架构
 
 ## 执行准则
-按阶段按顺序完成每一步，完成每一步后，先gradle同步，再尝试编译，编译通过了再更新TODOS.md，再把commit message 输出出来，让用户确认了，然后再git commit。
+按阶段按顺序完成每一步，完成每一步后，先gradle同步，再尝试编译，编译通过了再更新TODOS.md，再把commit message 输出出来，让用户确认了，然后再git commit。代码文件行数不要超过200行，函数长度不要超过50行。
 
 ## 项目信息
 - **源项目**: D:\workspace\kaiqiu-app-uni
