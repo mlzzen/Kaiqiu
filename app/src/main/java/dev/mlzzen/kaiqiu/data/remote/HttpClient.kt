@@ -1,12 +1,11 @@
 package dev.mlzzen.kaiqiu.data.remote
 
 import android.util.Log
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Response
+import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
@@ -29,12 +28,55 @@ object HttpClient {
     }
 
     private val authInterceptor = Interceptor { chain ->
-        val request = chain.request().newBuilder()
-        authToken?.let { token ->
-            request.addHeader("token", token)
+        val originalRequest = chain.request()
+        val requestWithToken = originalRequest.newBuilder()
+            .apply {
+                authToken?.let { token ->
+                    addHeader("token", token)
+                }
+            }
+            .build()
+
+        // 转换 JSON body 为 form-urlencoded
+        val body = originalRequest.body
+        if (body != null && body.contentType()?.toString() == "application/json") {
+            // 读取原始 body 内容
+            val buffer = okio.Buffer()
+            body.writeTo(buffer)
+            val jsonBody = buffer.readUtf8()
+
+            // 转换为 form-urlencoded
+            val formBody = parseJsonToFormBody(jsonBody)
+            val newRequest = requestWithToken.newBuilder()
+                .post(formBody)
+                .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                .build()
+            return@Interceptor chain.proceed(newRequest)
         }
-        request.addHeader("Content-Type", "application/json")
-        chain.proceed(request.build())
+
+        chain.proceed(requestWithToken)
+    }
+
+    private fun parseJsonToFormBody(json: String): FormBody {
+        val formBuilder = FormBody.Builder()
+        try {
+            // 简单解析 JSON 对象
+            val jsonStr = json.trim()
+            if (jsonStr.startsWith("{") && jsonStr.endsWith("}")) {
+                val content = jsonStr.substring(1, jsonStr.length - 1)
+                content.split(",").forEach { pair ->
+                    val keyValue = pair.split(":")
+                    if (keyValue.size == 2) {
+                        val key = keyValue[0].trim().removeSurrounding("\"")
+                        val value = keyValue[1].trim().removeSurrounding("\"")
+                        formBuilder.add(key, value)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse JSON body", e)
+        }
+        return formBuilder.build()
     }
 
     private val loggingInterceptor = HttpLoggingInterceptor { message ->
