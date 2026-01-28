@@ -281,6 +281,7 @@ fun EventDetailScreen(
                                     Text("参赛名单")
                                 }
                             }
+                            item { SignInButton(eventid = eventid) }
                             item { MainDetailTab(eventDetail = eventDetail) }
                         }
                         1 -> {
@@ -787,5 +788,60 @@ private fun ScoreChangeRow(change: ScoreChange) {
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.width(70.dp)
         )
+    }
+}
+
+@Composable
+private fun SignInButton(eventid: String) {
+    val scope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(false) }
+    var signedToday by remember { mutableStateOf(false) }
+
+    fun checkSignStatus() {
+        scope.launch {
+            try {
+                val response = HttpClient.api.getDaySign()
+                if (response.isSuccess) {
+                    signedToday = response.data?.msg?.contains("已签到") == true
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        checkSignStatus()
+    }
+
+    Button(
+        onClick = {
+            if (!isLoading && !signedToday) {
+                isLoading = true
+                scope.launch {
+                    try {
+                        val response = HttpClient.api.getDaySign()
+                        if (response.isSuccess) {
+                            signedToday = true
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        isLoading = false
+                    }
+                }
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        enabled = !signedToday && !isLoading
+    ) {
+        Icon(
+            if (signedToday) Icons.Default.Check else Icons.Default.Add,
+            contentDescription = null
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(if (signedToday) "今日已签到" else "每日签到")
     }
 }
