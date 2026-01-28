@@ -4,7 +4,9 @@
       "Bash(keytool:*)",
       "Bash(.gradlew assembleDebug)",
       "Bash(powershell -Command \"cd ''D:\\\\workspace\\\\Kaiqiu''; .\\\\gradlew.bat assembleDebug\")",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(cd:*)",
+      "Bash(gradlew.bat assembleDebug)"
     ]
   }
 }

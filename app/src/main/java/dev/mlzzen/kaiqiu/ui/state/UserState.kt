@@ -1,6 +1,8 @@
 package dev.mlzzen.kaiqiu.ui.state
 
 import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import dev.mlzzen.kaiqiu.data.datastore.AppDataStore
 import dev.mlzzen.kaiqiu.data.datastore.CityData
 import dev.mlzzen.kaiqiu.data.remote.HttpClient
@@ -12,10 +14,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.remember
 import com.google.gson.Gson
 
 /**
  * 用户状态管理 (类似 Pinia Store)
+ * 使用 CompositionLocal 提供单例
  */
 class UserState(
     private val context: Context,
@@ -58,7 +62,6 @@ class UserState(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     init {
-        // 初始化从 DataStore 加载数据
         scope.launch {
             dataStore.tokenFlow.collect { token ->
                 _token.value = token
@@ -73,7 +76,6 @@ class UserState(
                     try {
                         _userInfo.value = gson.fromJson(userInfoJson, UserInfo::class.java)
                     } catch (e: Exception) {
-                        // 解析失败，保持 null
                     }
                 } else {
                     _userInfo.value = null
@@ -122,9 +124,6 @@ class UserState(
 
     // ============ Actions ============
 
-    /**
-     * 登录
-     */
     fun login(phone: String, code: String) {
         scope.launch {
             _isLoading.value = true
@@ -136,8 +135,6 @@ class UserState(
                     _token.value = response.token
                     _userInfo.value = response.userInfo
                     _isLoggedIn.value = true
-
-                    // 保存到 DataStore
                     dataStore.setToken(response.token)
                     dataStore.setUserInfo(gson.toJson(response.userInfo))
                     HttpClient.setAuthToken(response.token)
@@ -145,40 +142,27 @@ class UserState(
                 is Result.Error -> {
                     _error.value = result.exception.message ?: "登录失败"
                 }
-                is Result.Loading -> { /* no-op */ }
+                is Result.Loading -> { }
             }
 
             _isLoading.value = false
         }
     }
 
-    /**
-     * 退出登录
-     */
     fun logout() {
         scope.launch {
             _isLoading.value = true
-
-            // 调用服务端登出
             userRepository.logout()
-
-            // 清除本地状态
             _token.value = null
             _userInfo.value = null
             _isLoggedIn.value = false
-
-            // 清除 DataStore
             dataStore.clearToken()
             dataStore.setUserInfo(null)
             HttpClient.clearAuthToken()
-
             _isLoading.value = false
         }
     }
 
-    /**
-     * 刷新用户信息
-     */
     fun refreshUserInfo() {
         scope.launch {
             when (val result = userRepository.getUserInfo()) {
@@ -189,14 +173,11 @@ class UserState(
                 is Result.Error -> {
                     _error.value = result.exception.message
                 }
-                is Result.Loading -> { /* no-op */ }
+                is Result.Loading -> { }
             }
         }
     }
 
-    /**
-     * 设置选择的城市
-     */
     fun setSelectCity(city: CityData) {
         scope.launch {
             _selectCity.value = city
@@ -205,9 +186,6 @@ class UserState(
         }
     }
 
-    /**
-     * 设置位置
-     */
     fun setLocation(locationArr: List<String>) {
         scope.launch {
             _location.value = locationArr
@@ -215,9 +193,6 @@ class UserState(
         }
     }
 
-    /**
-     * 设置更多模式
-     */
     fun setMoreMode(enabled: Boolean) {
         scope.launch {
             _isMoreMode.value = enabled
@@ -225,41 +200,28 @@ class UserState(
         }
     }
 
-    /**
-     * 添加搜索历史
-     */
     fun setSearchPlayerHis(keyword: String) {
         scope.launch {
             dataStore.setSearchPlayerHis(keyword)
         }
     }
 
-    /**
-     * 清空搜索历史
-     */
     fun clearSearchPlayerHis() {
         scope.launch {
             dataStore.clearSearchPlayerHis()
         }
     }
 
-    /**
-     * 清除错误
-     */
     fun clearError() {
         _error.value = null
     }
 
-    /**
-     * 清除所有数据 (退出时使用)
-     */
     fun removeAll() {
         scope.launch {
             _token.value = null
             _userInfo.value = null
             _isLoggedIn.value = false
             _location.value = emptyList()
-
             dataStore.clearToken()
             dataStore.setUserInfo(null)
             dataStore.setLocation(null)
@@ -274,4 +236,17 @@ class UserState(
 
     val isAuthenticated: Boolean
         get() = _isLoggedIn.value
+}
+
+/**
+ * CompositionLocal 用于提供 UserState 单例
+ */
+val LocalUserState = compositionLocalOf<UserState> { throw IllegalStateException("UserState not provided") }
+
+/**
+ * 创建 UserState 实例的工厂函数
+ */
+@Composable
+fun rememberUserState(context: Context): UserState {
+    return remember(context) { UserState(context) }
 }

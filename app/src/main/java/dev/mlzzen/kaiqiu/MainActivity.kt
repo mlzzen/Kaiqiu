@@ -14,12 +14,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.mlzzen.kaiqiu.ui.navigation.KaiqiuNavHost
 import dev.mlzzen.kaiqiu.ui.navigation.Screen
+import dev.mlzzen.kaiqiu.ui.state.LocalUserState
 import dev.mlzzen.kaiqiu.ui.state.UserState
+import dev.mlzzen.kaiqiu.ui.state.rememberUserState
 import dev.mlzzen.kaiqiu.ui.theme.KaiqiuTheme
 
 class MainActivity : ComponentActivity() {
@@ -35,53 +37,58 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun KaiqiuApp(userState: UserState = viewModel()) {
-    val navController = rememberNavController()
-    val isLoggedIn by userState.isLoggedIn.collectAsState()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+fun KaiqiuApp() {
+    val context = LocalContext.current
+    val userState: UserState = rememberUserState(context)
 
-    val showBottomBar = currentRoute in listOf(
-        Screen.Home.route,
-        Screen.Search.route,
-        Screen.Favorites.route,
-        Screen.Profile.route
-    )
+    CompositionLocalProvider(LocalUserState provides userState) {
+        val isLoggedIn by userState.isLoggedIn.collectAsState()
+        val navController = rememberNavController()
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
 
-    val items = listOf(
-        Triple(Screen.Home.route, "Home", Icons.Default.Home),
-        Triple(Screen.Search.route, "Search", Icons.Default.Search),
-        Triple(Screen.Favorites.route, "Favorites", Icons.Default.Favorite),
-        Triple(Screen.Profile.route, "Profile", Icons.Default.Person)
-    )
+        val showBottomBar = currentRoute in listOf(
+            Screen.Home.route,
+            Screen.Search.route,
+            Screen.Favorites.route,
+            Screen.Profile.route
+        )
 
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {
-            if (showBottomBar) {
-                items.forEach { (route, label, icon) ->
-                    item(
-                        icon = { Icon(icon, contentDescription = label) },
-                        label = { Text(label) },
-                        selected = currentRoute == route,
-                        onClick = {
-                            if (currentRoute != route) {
-                                navController.navigate(route) {
-                                    popUpTo(Screen.Home.route) {
-                                        saveState = true
+        val items = listOf(
+            Triple(Screen.Home.route, "Home", Icons.Default.Home),
+            Triple(Screen.Search.route, "Search", Icons.Default.Search),
+            Triple(Screen.Favorites.route, "Favorites", Icons.Default.Favorite),
+            Triple(Screen.Profile.route, "Profile", Icons.Default.Person)
+        )
+
+        NavigationSuiteScaffold(
+            navigationSuiteItems = {
+                if (showBottomBar) {
+                    items.forEach { (route, label, icon) ->
+                        item(
+                            icon = { Icon(icon, contentDescription = label) },
+                            label = { Text(label) },
+                            selected = currentRoute == route,
+                            onClick = {
+                                if (currentRoute != route) {
+                                    navController.navigate(route) {
+                                        popUpTo(Screen.Home.route) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
+        ) {
+            KaiqiuNavHost(
+                navController = navController,
+                startDestination = if (isLoggedIn) Screen.Home.route else Screen.Login.route
+            )
         }
-    ) {
-        KaiqiuNavHost(
-            navController = navController,
-            startDestination = if (isLoggedIn) Screen.Home.route else Screen.Login.route
-        )
     }
 }

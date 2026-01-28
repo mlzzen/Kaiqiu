@@ -25,7 +25,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.mlzzen.kaiqiu.ui.state.LocalUserState
 import dev.mlzzen.kaiqiu.ui.state.UserState
 import dev.mlzzen.kaiqiu.ui.theme.KaiqiuBlue
 import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
@@ -34,7 +34,7 @@ import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    userState: UserState = viewModel()
+    userState: UserState = LocalUserState.current
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current

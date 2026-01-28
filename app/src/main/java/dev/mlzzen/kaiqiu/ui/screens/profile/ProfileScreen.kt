@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.mlzzen.kaiqiu.ui.state.LocalUserState
 import dev.mlzzen.kaiqiu.ui.state.UserState
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -27,7 +27,7 @@ fun ProfileScreen(
     onNavigateToAbout: () -> Unit
 ) {
     val context = LocalContext.current
-    val userState: UserState = viewModel()
+    val userState: UserState = LocalUserState.current
     val userInfo by userState.userInfo.collectAsState()
     val isLoggedIn by userState.isLoggedIn.collectAsState()
     val cityName = userState.cityName

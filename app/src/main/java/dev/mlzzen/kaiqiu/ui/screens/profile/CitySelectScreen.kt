@@ -13,8 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.mlzzen.kaiqiu.data.datastore.CityData
+import dev.mlzzen.kaiqiu.ui.state.LocalUserState
 import dev.mlzzen.kaiqiu.ui.state.UserState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,7 +23,7 @@ fun CitySelectScreen(
     onNavigateBack: () -> Unit,
     onCitySelected: () -> Unit
 ) {
-    val userState: UserState = viewModel()
+    val userState: UserState = LocalUserState.current
     val selectCity by userState.selectCity.collectAsState()
     val citySelectHis by userState.citySelectHis.collectAsState()
     var searchText by remember { mutableStateOf("") }
