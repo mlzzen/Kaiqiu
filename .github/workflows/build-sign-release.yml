@@ -1,14 +1,9 @@
 name: Build, Sign & Release
 
 on:
-  # 开发版本: 每次 push 到 main 分支触发
   push:
-    branches: [main]
     tags:
       - 'v*'
-    paths-ignore:
-      - '**.md'
-      - 'CLAUDE.md'
 
   # 生产版本: 发布 release 时触发
   release:
@@ -106,12 +101,12 @@ jobs:
 
       # 7. 构建 Debug APK
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
 
       # 8. 构建 Release APK (如果配置了签名)
       - name: Build Release APK
         if: steps.version.outputs.is-release == 'true'
-        run: ./gradlew assembleRelease --no-daemon
+        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
 
       # 9. 上传构建产物
       - name: Upload Debug APK
