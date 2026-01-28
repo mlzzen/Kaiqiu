@@ -8,9 +8,9 @@ import dev.mlzzen.kaiqiu.data.remote.*
 class UserRepository(
     private val api: ApiService = HttpClient.api
 ) {
-    suspend fun login(phone: String, code: String): Result<LoginResponse> {
+    suspend fun login(account: String, password: String): Result<LoginResponse> {
         return Result.safeApiCall {
-            api.login(mapOf("phone" to phone, "code" to code)).getOrThrow()
+            api.login(mapOf("account" to account, "password" to password)).getOrThrow()
         }
     }
 

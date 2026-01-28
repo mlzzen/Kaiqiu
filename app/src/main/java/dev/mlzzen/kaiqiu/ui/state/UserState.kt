@@ -124,12 +124,12 @@ class UserState(
 
     // ============ Actions ============
 
-    fun login(phone: String, code: String) {
+    fun login(account: String, password: String) {
         scope.launch {
             _isLoading.value = true
             _error.value = null
 
-            when (val result = userRepository.login(phone, code)) {
+            when (val result = userRepository.login(account, password)) {
                 is Result.Success -> {
                     val response = result.data
                     _token.value = response.token

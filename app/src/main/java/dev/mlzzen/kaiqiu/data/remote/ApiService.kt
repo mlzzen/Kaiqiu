@@ -10,7 +10,7 @@ interface ApiService {
     // ============ Login ============
 
     @POST("user/login")
-    suspend fun login(@Body body: Map<String, String>): ApiResponse<LoginResponse>
+    suspend fun login(@Body body: Map<String, Any>): ApiResponse<LoginResponse>
 
     @POST("user/logout")
     suspend fun logout(): ApiResponse<Unit>
