@@ -23,9 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import dev.mlzzen.kaiqiu.data.remote.EventDetail
-import dev.mlzzen.kaiqiu.data.remote.EventItemInfo
-import dev.mlzzen.kaiqiu.data.remote.HttpClient
+import dev.mlzzen.kaiqiu.data.remote.*
 import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,8 +47,60 @@ fun EventDetailScreen(
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
+    // 赛程数据
+    var groupGames by remember { mutableStateOf<List<GroupGamesResponse>?>(null) }
+    var knockoutRounds by remember { mutableStateOf<List<RoundData>>(emptyList()) }
+
+    // 成绩数据
+    var honors by remember { mutableStateOf<List<HonorItem>>(emptyList()) }
+    var results by remember { mutableStateOf<List<ResultItem>>(emptyList()) }
+
+    // 积分数据
+    var scoreChanges by remember { mutableStateOf<List<ScoreChange>>(emptyList()) }
+
     val tabList = listOf("详情", "赛程", "成绩", "积分")
     val crtItem: EventItemInfo? = items.find { it.id == activeItemId }
+
+    suspend fun loadScheduleData() {
+        try {
+            val groupResponse = HttpClient.api.getGroupGames(mapOf("eventid" to eventid))
+            if (groupResponse.isSuccess && groupResponse.data != null) {
+                groupGames = listOf(groupResponse.data)
+            }
+            val knockoutResponse = HttpClient.api.getArrangeKnockout(mapOf("eventid" to eventid))
+            if (knockoutResponse.isSuccess) {
+                knockoutRounds = knockoutResponse.data?.rounds ?: emptyList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun loadResultData() {
+        try {
+            val honorResponse = HttpClient.api.getAllHonors(mapOf("eventid" to eventid))
+            if (honorResponse.isSuccess) {
+                honors = honorResponse.data ?: emptyList()
+            }
+            val resultResponse = HttpClient.api.getAllResult(mapOf("eventid" to eventid))
+            if (resultResponse.isSuccess) {
+                results = resultResponse.data ?: emptyList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun loadScoreData() {
+        try {
+            val scoreResponse = HttpClient.api.getScoreChangeByEventid(eventid)
+            if (scoreResponse.isSuccess) {
+                scoreChanges = scoreResponse.data ?: emptyList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     fun loadData() {
         isLoading = true
@@ -68,6 +118,9 @@ fun EventDetailScreen(
                     if (items.isNotEmpty() && activeItemId == null) {
                         activeItemId = items[0].id
                     }
+                    scope.launch { loadScheduleData() }
+                    scope.launch { loadResultData() }
+                    scope.launch { loadScoreData() }
                 } else {
                     error = response.msg
                 }
@@ -231,13 +284,19 @@ fun EventDetailScreen(
                             item { MainDetailTab(eventDetail = eventDetail) }
                         }
                         1 -> {
-                            item { ScheduleTab(onNavigateToScore = { onNavigateToScore(activeItemId ?: "") }) }
+                            item {
+                                ScheduleTab(
+                                    groupGames = groupGames,
+                                    knockoutRounds = knockoutRounds,
+                                    onNavigateToScore = { onNavigateToScore(activeItemId ?: "") }
+                                )
+                            }
                         }
                         2 -> {
-                            item { ResultTab() }
+                            item { ResultTab(honors = honors, results = results) }
                         }
                         3 -> {
-                            item { ScoreChangeTab() }
+                            item { ScoreChangeTab(scoreChanges = scoreChanges) }
                         }
                     }
                 }
@@ -391,68 +450,342 @@ private fun DetailRow(label: String, value: String) {
 }
 
 @Composable
-private fun ScheduleTab(onNavigateToScore: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Default.Star,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("暂无赛程信息", color = TextSecondary)
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onNavigateToScore) {
-                Text("录入成绩")
+private fun ScheduleTab(
+    groupGames: List<GroupGamesResponse>?,
+    knockoutRounds: List<RoundData>,
+    onNavigateToScore: () -> Unit
+) {
+    val hasData = (groupGames?.isNotEmpty() == true) || knockoutRounds.isNotEmpty()
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (hasData) {
+            // 小组赛
+            groupGames?.forEach { groupResponse ->
+                groupResponse.groups?.forEach { group ->
+                    if (!group.groupName.isNullOrEmpty()) {
+                        Text(
+                            text = "小组: ${group.groupName}",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                        )
+                        HorizontalDivider()
+                    }
+                    // 小组积分表
+                    if (group.names?.isNotEmpty() == true) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("选手", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                                Text("胜", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
+                                Text("负", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
+                                Text("净胜局", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            group.names.forEachIndexed { index, player ->
+                                val wins = group.scores?.get("wins_$index") ?: "0"
+                                val losses = group.scores?.get("losses_$index") ?: "0"
+                                val netWins = group.scores?.get("net_$index") ?: "0"
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        player.username ?: "-",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Text(wins, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
+                                    Text(losses, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
+                                    Text(netWins, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 淘汰赛
+            if (knockoutRounds.isNotEmpty()) {
+                Text(
+                    text = "淘汰赛",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+                HorizontalDivider()
+                knockoutRounds.forEach { round ->
+                    Text(
+                        text = round.roundname,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF39B54A),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                    round.games?.forEach { game ->
+                        GameResultRow(game = game)
+                    }
+                }
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("暂无赛程信息", color = TextSecondary)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onNavigateToScore) {
+                        Text("录入成绩")
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ResultTab() {
-    Box(
+private fun GameResultRow(game: TtGameData) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Default.Star,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("暂无成绩信息", color = TextSecondary)
+        Text(
+            text = game.nickname1 ?: game.username1 ?: "-",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = "${game.result1 ?: 0} : ${game.result2 ?: 0}",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+        Text(
+            text = game.nickname2 ?: game.username2 ?: "-",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.weight(1f),
+            textAlign = androidx.compose.ui.text.style.TextAlign.End
+        )
+    }
+}
+
+@Composable
+private fun ResultTab(honors: List<HonorItem>, results: List<ResultItem>) {
+    val hasData = honors.isNotEmpty() || results.isNotEmpty()
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (hasData) {
+            // 荣誉榜
+            if (honors.isNotEmpty()) {
+                Text(
+                    text = "荣誉榜",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+                HorizontalDivider()
+                honors.forEach { honor ->
+                    ResultRow(
+                        rank = honor.ranking,
+                        nickname = honor.nickname ?: "-",
+                        score = honor.score ?: "-",
+                        avatar = honor.avatar
+                    )
+                    HorizontalDivider()
+                }
+            }
+
+            // 比赛结果
+            if (results.isNotEmpty()) {
+                Text(
+                    text = "比赛结果",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+                HorizontalDivider()
+                results.forEach { result ->
+                    ResultRow(
+                        rank = result.ranking,
+                        nickname = result.nickname ?: "-",
+                        score = "${result.wins}胜 ${result.losses}负",
+                        avatar = result.avatar
+                    )
+                    HorizontalDivider()
+                }
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("暂无成绩信息", color = TextSecondary)
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun ScoreChangeTab() {
-    Box(
+private fun ResultRow(rank: Int, nickname: String, score: String, avatar: String?) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Default.Star,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("暂无积分变化信息", color = TextSecondary)
+        // 排名
+        Text(
+            text = "#$rank",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = when (rank) {
+                1 -> Color(0xFFFFD700)
+                2 -> Color(0xFFC0C0C0)
+                3 -> Color(0xFFCD7F32)
+                else -> Color.Gray
+            },
+            modifier = Modifier.width(40.dp)
+        )
+
+        // 头像
+        AsyncImage(
+            model = avatar?.let { if (!it.startsWith("http")) "https:$it" else it },
+            contentDescription = null,
+            modifier = Modifier
+                .size(36.dp)
+                .padding(end = 8.dp),
+            contentScale = ContentScale.Crop
+        )
+
+        // 昵称
+        Text(
+            text = nickname,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
+
+        // 分数/战绩
+        Text(
+            text = score,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary
+        )
+    }
+}
+
+@Composable
+private fun ScoreChangeTab(scoreChanges: List<ScoreChange>) {
+    val hasData = scoreChanges.isNotEmpty()
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (hasData) {
+            // 表头
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF5F5F5))
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("选手", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                Text("赛前积分", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(70.dp))
+                Text("变化", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
+                Text("赛后积分", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(70.dp))
+            }
+            HorizontalDivider()
+
+            // 积分变化列表
+            scoreChanges.forEach { change ->
+                ScoreChangeRow(change = change)
+                HorizontalDivider()
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("暂无积分变化信息", color = TextSecondary)
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun ScoreChangeRow(change: ScoreChange) {
+    val changeValue = change.change?.toDoubleOrNull() ?: 0.0
+    val changeColor = when {
+        changeValue > 0 -> Color(0xFF39B54A)
+        changeValue < 0 -> Color(0xFFE6326E)
+        else -> Color.Gray
+    }
+    val changeText = when {
+        changeValue > 0 -> "+${change.change}"
+        else -> change.change ?: "0"
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = change.nickname ?: "-",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = change.beforeScore ?: "-",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.width(70.dp)
+        )
+        Text(
+            text = changeText,
+            style = MaterialTheme.typography.bodySmall,
+            color = changeColor,
+            modifier = Modifier.width(60.dp)
+        )
+        Text(
+            text = change.afterScore ?: "-",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.width(70.dp)
+        )
     }
 }
