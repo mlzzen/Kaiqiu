@@ -4,25 +4,22 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import dev.mlzzen.kaiqiu.ui.navigation.KaiqiuNavHost
+import dev.mlzzen.kaiqiu.ui.navigation.Screen
+import dev.mlzzen.kaiqiu.ui.state.UserState
 import dev.mlzzen.kaiqiu.ui.theme.KaiqiuTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,58 +34,54 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@PreviewScreenSizes
 @Composable
-fun KaiqiuApp() {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+fun KaiqiuApp(userState: UserState = viewModel()) {
+    val navController = rememberNavController()
+    val isLoggedIn by userState.isLoggedIn.collectAsState()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val showBottomBar = currentRoute in listOf(
+        Screen.Home.route,
+        Screen.Search.route,
+        Screen.Favorites.route,
+        Screen.Profile.route
+    )
+
+    val items = listOf(
+        Triple(Screen.Home.route, "Home", Icons.Default.Home),
+        Triple(Screen.Search.route, "Search", Icons.Default.Search),
+        Triple(Screen.Favorites.route, "Favorites", Icons.Default.Favorite),
+        Triple(Screen.Profile.route, "Profile", Icons.Default.Person)
+    )
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
-            AppDestinations.entries.forEach {
-                item(
-                    icon = {
-                        Icon(
-                            it.icon,
-                            contentDescription = it.label
-                        )
-                    },
-                    label = { Text(it.label) },
-                    selected = it == currentDestination,
-                    onClick = { currentDestination = it }
-                )
+            if (showBottomBar) {
+                items.forEach { (route, label, icon) ->
+                    item(
+                        icon = { Icon(icon, contentDescription = label) },
+                        label = { Text(label) },
+                        selected = currentRoute == route,
+                        onClick = {
+                            if (currentRoute != route) {
+                                navController.navigate(route) {
+                                    popUpTo(Screen.Home.route) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
     ) {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
-            )
-        }
-    }
-}
-
-enum class AppDestinations(
-    val label: String,
-    val icon: ImageVector,
-) {
-    HOME("Home", Icons.Default.Home),
-    FAVORITES("Favorites", Icons.Default.Favorite),
-    PROFILE("Profile", Icons.Default.AccountBox),
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    KaiqiuTheme {
-        Greeting("Android")
+        KaiqiuNavHost(
+            navController = navController,
+            startDestination = if (isLoggedIn) Screen.Home.route else Screen.Login.route
+        )
     }
 }

@@ -49,33 +49,33 @@
 ## 阶段四：页面迁移
 
 ### 4.1 登录模块
-- [ ] 4.1.1 迁移 login/login.vue → LoginScreen.kt
+- [x] 4.1.1 迁移 login/login.vue → LoginScreen.kt
 
 ### 4.2 首页模块
-- [ ] 4.2.1 迁移 main/main.vue → HomeScreen.kt
-- [ ] 4.2.2 迁移 main/selectCityPage.vue → CitySelectScreen.kt
-- [ ] 4.2.3 迁移 main/about.vue → AboutScreen.kt
-- [ ] 4.2.4 迁移 main/my.vue → ProfileScreen.kt
+- [x] 4.2.1 迁移 main/main.vue → HomeScreen.kt
+- [x] 4.2.2 迁移 main/selectCityPage.vue → CitySelectScreen.kt
+- [x] 4.2.3 迁移 main/about.vue → AboutScreen.kt
+- [x] 4.2.4 迁移 main/my.vue → ProfileScreen.kt
 
 ### 4.3 用户模块
-- [ ] 4.3.1 迁移 user/user.vue → UserDetailScreen.kt
-- [ ] 4.3.2 迁移 user/eventHis.vue → UserEventsScreen.kt
-- [ ] 4.3.3 迁移 user/followPlayers.vue → FollowedPlayersScreen.kt
+- [x] 4.3.1 迁移 user/user.vue → UserDetailScreen.kt
+- [x] 4.3.2 迁移 user/eventHis.vue → UserEventsScreen.kt
+- [x] 4.3.3 迁移 user/followPlayers.vue → FollowedPlayersScreen.kt
 
 ### 4.4 搜索模块
-- [ ] 4.4.1 迁移 search/searchIndex.vue → SearchScreen.kt
+- [x] 4.4.1 迁移 search/searchIndex.vue → SearchScreen.kt
 - [ ] 4.4.2 迁移 search/topSearch.vue → TopSearchScreen.kt
 - [ ] 4.4.3 迁移 search/top100Data.vue → Top100Screen.kt
 - [ ] 4.4.4 迁移 search/rank.vue → RankScreen.kt
 - [ ] 4.4.5 迁移 search/gym.vue → GymScreen.kt
 
 ### 4.5 赛事模块
-- [ ] 4.5.1 迁移 event/eventMain.vue → EventListScreen.kt
-- [ ] 4.5.2 迁移 event/memberList.vue → EventMemberListScreen.kt
+- [x] 4.5.1 迁移 event/eventMain.vue → EventListScreen.kt
+- [x] 4.5.2 迁移 event/memberList.vue → EventMemberListScreen.kt
 - [ ] 4.5.3 迁移 event/components/* → Event 组件
 
 ### 4.6 比赛模块
-- [ ] 4.6.1 迁移 match/matchInfo.vue → MatchDetailScreen.kt
+- [x] 4.6.1 迁移 match/matchInfo.vue → MatchDetailScreen.kt
 
 ### 4.7 记分模块
 - [ ] 4.7.1 迁移 setScore/ttGame.vue → ScoreEntryScreen.kt
