@@ -77,8 +77,8 @@
 - [x] 4.6.1 迁移 match/matchInfo.vue → MatchDetailScreen.kt
 
 ### 4.7 记分模块
-- [ ] 4.7.1 迁移 setScore/ttGame.vue → ScoreEntryScreen.kt
-- [ ] 4.7.2 迁移 setScore/group.vue → GroupScoreScreen.kt
+- [x] 4.7.1 迁移 setScore/ttGame.vue → ScoreEntryScreen.kt
+- [x] 4.7.2 迁移 setScore/group.vue → GroupScoreScreen.kt
 
 ---
 

@@ -18,7 +18,7 @@ interface ApiService {
     // ============ User ============
 
     @POST("user/get_userinfo")
-    suspend fun getUserInfo(@Body body: Map<String, Any>): ApiResponse<UserInfo>
+    suspend fun getUserInfo(@Body body: Map<String, String>): ApiResponse<UserInfo>
 
     @POST("user/adv_profile")
     suspend fun getAdvProfile(@Query("uid") uid: String): ApiResponse<AdvProfile>
@@ -30,7 +30,7 @@ interface ApiService {
     ): ApiResponse<List<GameRecord>>
 
     @POST("center/events")
-    suspend fun getMatchListHisByPage(@Body body: Map<String, Any>): ApiResponse<List<EventHistory>>
+    suspend fun getMatchListHisByPage(@Body body: Map<String, String>): ApiResponse<List<EventHistory>>
 
     @GET("User/followee")
     suspend fun goFolloweeByUid(@Query("uid") uid: String): ApiResponse<Unit>
@@ -48,7 +48,7 @@ interface ApiService {
     suspend fun getUserListPageByKey(@QueryMap params: Map<String, String>): ApiResponse<List<UserItem>>
 
     @POST("user/lists")
-    suspend fun getPageUserRankList(@Body body: Map<String, Any>): ApiResponse<RankListResponse>
+    suspend fun getPageUserRankList(@Body body: Map<String, String>): ApiResponse<RankListResponse>
 
     @POST("user/sign")
     suspend fun getDaySign(): ApiResponse<SignResponse>
@@ -70,7 +70,7 @@ interface ApiService {
     // ============ Arena ============
 
     @POST("arena/lists")
-    suspend fun getArenaListPageByKey(@Body body: Map<String, Any>): ApiResponse<List<ArenaItem>>
+    suspend fun getArenaListPageByKey(@Body body: Map<String, String>): ApiResponse<List<ArenaItem>>
 
     @GET("arena/detail")
     suspend fun getArenaDetail(@QueryMap params: Map<String, String>): ApiResponse<ArenaDetail>
@@ -81,7 +81,7 @@ interface ApiService {
     // ============ Match ============
 
     @POST("match/lists")
-    suspend fun getMatchListByPage(@Body body: Map<String, Any>): ApiResponse<MatchListResponse>
+    suspend fun getMatchListByPage(@Body body: Map<String, String>): ApiResponse<MatchListResponse>
 
     @GET("Match/getGameidByUIDAndGroupID")
     suspend fun getGameidByUIDAndGroupID(@QueryMap params: Map<String, String>): ApiResponse<GameIdResponse>
@@ -90,7 +90,7 @@ interface ApiService {
     suspend fun getGameidByUIDAndMatchItem(@QueryMap params: Map<String, String>): ApiResponse<GameIdResponse>
 
     @POST("Match/getGameDetail")
-    suspend fun getGameDetailByGameid(@Body body: Map<String, Any>): ApiResponse<GameDetail>
+    suspend fun getGameDetailByGameid(@Body body: Map<String, String>): ApiResponse<GameDetail>
 
     @GET("Arrange/knockout")
     suspend fun getArrangeKnockout(@QueryMap params: Map<String, String>): ApiResponse<KnockoutResponse>

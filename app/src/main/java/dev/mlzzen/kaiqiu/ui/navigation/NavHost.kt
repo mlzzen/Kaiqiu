@@ -13,6 +13,8 @@ import dev.mlzzen.kaiqiu.ui.screens.event.EventMembersScreen
 import dev.mlzzen.kaiqiu.ui.screens.home.HomeScreen
 import dev.mlzzen.kaiqiu.ui.screens.login.LoginScreen
 import dev.mlzzen.kaiqiu.ui.screens.match.MatchDetailScreen
+import dev.mlzzen.kaiqiu.ui.screens.match.ScoreEntryScreen
+import dev.mlzzen.kaiqiu.ui.screens.match.GroupScoreScreen
 import dev.mlzzen.kaiqiu.ui.screens.profile.AboutScreen
 import dev.mlzzen.kaiqiu.ui.screens.profile.CitySelectScreen
 import dev.mlzzen.kaiqiu.ui.screens.profile.ProfileScreen
@@ -217,6 +219,44 @@ fun KaiqiuNavHost(
             MatchDetailScreen(
                 gameid = gameid,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.ScoreEntry.route,
+            arguments = listOf(
+                navArgument("eventid") { type = NavType.StringType },
+                navArgument("itemid") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val eventid = backStackEntry.arguments?.getString("eventid") ?: ""
+            val itemid = backStackEntry.arguments?.getString("itemid") ?: ""
+            ScoreEntryScreen(
+                eventid = eventid,
+                itemid = itemid,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToGroupScore = {
+                    navController.navigate(Screen.GroupScore.createRoute(eventid, itemid))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.GroupScore.route,
+            arguments = listOf(
+                navArgument("eventid") { type = NavType.StringType },
+                navArgument("itemid") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val eventid = backStackEntry.arguments?.getString("eventid") ?: ""
+            val itemid = backStackEntry.arguments?.getString("itemid") ?: ""
+            GroupScoreScreen(
+                eventid = eventid,
+                itemid = itemid,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToScoreEntry = {
+                    navController.navigate(Screen.ScoreEntry.createRoute(eventid, itemid))
+                }
             )
         }
 

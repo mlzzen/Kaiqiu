@@ -42,7 +42,7 @@ class UserRepository(
 
     suspend fun getMatchListHisByPage(page: Int): Result<List<EventHistory>> {
         return Result.safeApiCall {
-            api.getMatchListHisByPage(mapOf("page" to page, "index" to 0)).getOrThrow()
+            api.getMatchListHisByPage(mapOf("page" to page.toString(), "index" to "0")).getOrThrow()
         }
     }
 
@@ -162,7 +162,7 @@ class ArenaRepository(
         keyword: String? = null
     ): Result<List<ArenaItem>> {
         return Result.safeApiCall {
-            val body = mutableMapOf<String, Any>("city" to city, "page" to page)
+            val body = mutableMapOf<String, String>("city" to city, "page" to page.toString())
             keyword?.let { body["keyword"] = it }
             api.getArenaListPageByKey(body).getOrThrow()
         }
@@ -193,7 +193,7 @@ class MatchRepository(
         keyword: String? = null
     ): Result<MatchListResponse> {
         return Result.safeApiCall {
-            val body = mutableMapOf<String, Any>("city" to city, "page" to page)
+            val body = mutableMapOf<String, String>("city" to city, "page" to page.toString())
             keyword?.let { body["search"] = "1"; body["eventTitle"] = it }
             api.getMatchListByPage(body).getOrThrow()
         }

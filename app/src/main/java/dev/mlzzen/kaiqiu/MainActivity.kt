@@ -87,7 +87,7 @@ fun KaiqiuApp() {
         ) {
             KaiqiuNavHost(
                 navController = navController,
-                startDestination = if (isLoggedIn) Screen.Home.route else Screen.Login.route
+                startDestination = Screen.Home.route
             )
         }
     }

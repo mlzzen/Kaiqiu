@@ -309,10 +309,8 @@ data class ArenaDetail(
  * 比赛列表响应
  */
 data class MatchListResponse(
-    @SerializedName("list")
-    val list: List<EventItem>,
-    @SerializedName("total")
-    val total: Int
+    @SerializedName("data")
+    val data: List<EventItem>
 )
 
 /**
@@ -365,10 +363,38 @@ data class KnockoutResponse(
  * 轮次数据
  */
 data class RoundData(
+    @SerializedName("roundname")
+    val roundname: String,
     @SerializedName("name")
-    val name: String,
-    @SerializedName("matches")
-    val matches: List<MatchData>
+    val name: String?,
+    @SerializedName("games")
+    val games: List<TtGameData>
+)
+
+/**
+ * TT游戏数据
+ */
+data class TtGameData(
+    @SerializedName("gameid")
+    val gameid: String?,
+    @SerializedName("uid1")
+    val uid1: String?,
+    @SerializedName("uid2")
+    val uid2: String?,
+    @SerializedName("username1")
+    val username1: String?,
+    @SerializedName("username2")
+    val username2: String?,
+    @SerializedName("result1")
+    val result1: String?,
+    @SerializedName("result2")
+    val result2: String?,
+    @SerializedName("gameRemark")
+    val gameRemark: String?,
+    @SerializedName("nickname1")
+    val nickname1: String?,
+    @SerializedName("nickname2")
+    val nickname2: String?
 )
 
 /**
@@ -405,10 +431,26 @@ data class GroupGamesResponse(
 data class GroupData(
     @SerializedName("groupName")
     val groupName: String,
-    @SerializedName("players")
-    val players: List<GroupPlayer>,
-    @SerializedName("games")
-    val games: List<GroupMatch>
+    @SerializedName("names")
+    val names: List<GroupPlayerName>,
+    @SerializedName("scores")
+    val scores: Map<String, String>,
+    @SerializedName("groupid")
+    val groupid: String?
+)
+
+/**
+ * 分组球员名称
+ */
+data class GroupPlayerName(
+    @SerializedName("uid")
+    val uid: String,
+    @SerializedName("username")
+    val username: String?,
+    @SerializedName("sumScore")
+    val sumScore: String?,
+    @SerializedName("rank")
+    val rank: String?
 )
 
 /**
