@@ -40,6 +40,15 @@ class UserState(
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
+    init {
+        // 立即检查是否有已保存的 token
+        scope.launch {
+            val token = dataStore.getTokenSync()
+            _isLoggedIn.value = !token.isNullOrBlank()
+            token?.let { HttpClient.setAuthToken(it) }
+        }
+    }
+
     private val _location = MutableStateFlow<List<String>>(emptyList())
     val location: StateFlow<List<String>> = _location.asStateFlow()
 

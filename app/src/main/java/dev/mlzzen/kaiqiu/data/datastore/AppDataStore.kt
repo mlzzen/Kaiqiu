@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import java.io.IOException
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "kaiqiu_preferences")
@@ -32,6 +35,15 @@ class AppDataStore(private val context: Context) {
     }
 
     private val dataStore = context.dataStore
+
+    // 同步获取 token（阻塞式，用于初始化检查）
+    fun getTokenSync(): String? = runBlocking(Dispatchers.IO) {
+        try {
+            dataStore.data.first()[KEY_TOKEN]
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     // ============ Token ============
 
