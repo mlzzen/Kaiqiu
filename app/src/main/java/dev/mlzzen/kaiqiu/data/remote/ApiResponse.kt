@@ -216,13 +216,31 @@ data class TopListResponse(
 )
 
 /**
+ * Top 100 数据项
+ */
+data class Top100Item(
+    @SerializedName("uid")
+    val uid: String?,
+    @SerializedName("realname")
+    val realname: String?,
+    @SerializedName("score")
+    val score: String?,
+    @SerializedName("sex")
+    val sex: String?,
+    @SerializedName("special")
+    val special: String?
+)
+
+/**
  * Top 100 数据响应
  */
 data class Top100Response(
     @SerializedName("list")
-    val list: List<UserItem>,
+    val list: List<Top100Item>,
     @SerializedName("tabIndex")
-    val tabIndex: Int
+    val tabIndex: Int,
+    @SerializedName("th")
+    val th: String?
 )
 
 /**
