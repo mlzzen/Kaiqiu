@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(keytool:*)",
+      "Bash(.gradlew assembleDebug)",
+      "Bash(powershell -Command \"cd ''D:\\\\workspace\\\\Kaiqiu''; .\\\\gradlew.bat assembleDebug\")",
+      "Bash(powershell:*)"
+    ]
+  }
+}
