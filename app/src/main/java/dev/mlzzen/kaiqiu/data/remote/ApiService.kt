@@ -42,7 +42,7 @@ interface ApiService {
     suspend fun goCancelFolloweeByUid(@Query("uid") uid: String): ApiResponse<Unit>
 
     @GET("User/getUserFolloweesList")
-    suspend fun getUserFolloweesList(): ApiResponse<List<UserFollow>>
+    suspend fun getUserFolloweesList(): ApiResponse<UserFollowListResponse>
 
     @GET("User/getFolloweeEnrolledMatch")
     suspend fun getFolloweeEnrolledMatch(@Query("uid") uid: String): ApiResponse<List<EventItem>>

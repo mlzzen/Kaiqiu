@@ -14,7 +14,8 @@
       "Bash(git commit:*)",
       "Bash(findstr:*)",
       "Bash(.gradlew.bat:*)",
-      "Bash(D:/workspace/Kaiqiu/gradlew.bat assembleDebug)"
+      "Bash(D:/workspace/Kaiqiu/gradlew.bat assembleDebug)",
+      "Bash(./gradlew.bat:*)"
     ]
   }
 }

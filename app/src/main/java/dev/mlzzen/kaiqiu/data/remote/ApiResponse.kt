@@ -293,14 +293,26 @@ data class EventHistory(
 
 /**
  * 用户关注
+ * API 返回字段: fuid, face_url, realname, nickname
  */
 data class UserFollow(
-    @SerializedName("uid")
+    @SerializedName("fuid")
     val uid: String,
+    @SerializedName("face_url")
+    val avatar: String?,
+    @SerializedName("realname")
+    val realname: String?,
     @SerializedName("nickname")
-    val nickname: String?,
-    @SerializedName("avatar")
-    val avatar: String?
+    val nickname: String?
+)
+
+/**
+ * 关注列表响应
+ * API 返回结构: {"code":1,"data":{"followeesList":[...]}}
+ */
+data class UserFollowListResponse(
+    @SerializedName("followeesList")
+    val followeesList: List<UserFollow>?
 )
 
 /**

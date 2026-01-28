@@ -101,7 +101,7 @@ class UserRepository(
 
     suspend fun getUserFolloweesList(): Result<List<UserFollow>> {
         return Result.safeApiCall {
-            api.getUserFolloweesList().getOrThrow()
+            api.getUserFolloweesList().getOrThrow().followeesList ?: emptyList()
         }
     }
 

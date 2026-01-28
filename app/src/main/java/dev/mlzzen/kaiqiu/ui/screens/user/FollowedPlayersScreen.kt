@@ -37,7 +37,7 @@ fun FollowedPlayersScreen(
             try {
                 val response = HttpClient.api.getUserFolloweesList()
                 if (response.isSuccess) {
-                    followedList = response.data ?: emptyList()
+                    followedList = response.data?.followeesList ?: emptyList()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -156,8 +156,9 @@ private fun FollowedPlayerRow(
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
+            val displayName = user.realname ?: user.nickname ?: "-"
             Text(
-                text = user.nickname ?: "-",
+                text = displayName,
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
