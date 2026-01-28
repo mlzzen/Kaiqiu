@@ -26,15 +26,15 @@
 
 ## 阶段二：数据层迁移
 
-- [ ] 2.1 创建基础网络请求封装 (HttpClient/Dio -> Retrofit)
-- [ ] 2.2 创建 API 响应包装类 (Result<T>)
-- [ ] 2.3 迁移 login API (api/login.js)
-- [ ] 2.4 迁移 user API (api/user.js)
-- [ ] 2.5 迁移 top API (api/top.js)
-- [ ] 2.6 迁移 arena API (api/arena.js)
-- [ ] 2.7 迁移 match API (api/match.js)
-- [ ] 2.8 迁移 event API (api/event.js)
-- [ ] 2.9 迁移 publicc API (api/publicc.js)
+- [x] 2.1 创建基础网络请求封装 (HttpClient/Dio -> Retrofit)
+- [x] 2.2 创建 API 响应包装类 (Result<T>)
+- [x] 2.3 迁移 login API (api/login.js)
+- [x] 2.4 迁移 user API (api/user.js)
+- [x] 2.5 迁移 top API (api/top.js)
+- [x] 2.6 迁移 arena API (api/arena.js)
+- [x] 2.7 迁移 match API (api/match.js)
+- [x] 2.8 迁移 event API (api/event.js)
+- [x] 2.9 迁移 publicc API (api/publicc.js)
 
 ---
 
