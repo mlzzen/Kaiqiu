@@ -3,7 +3,7 @@
 将 `kaiqiu-app-uni` uni-app 项目迁移到 Android Kotlin Compose 架构
 
 ## 执行准则
-按阶段按顺序完成每一步，完成每一步后，先gradle同步，再尝试编译，编译通过了再更新TODOS.md，再把commit message 输出出来，我先尝试成功了，我自己再去手动git commit
+按阶段按顺序完成每一步，完成每一步后，先gradle同步，再尝试编译，编译通过了再更新TODOS.md，再把commit message 输出出来，让用户确认了，然后再git commit。
 
 ## 项目信息
 - **源项目**: D:\workspace\kaiqiu-app-uni
@@ -92,23 +92,7 @@
 
 ---
 
-## 阶段六：工具函数迁移
-
-- [ ] 6.1 迁移 request 封装 (utils/request/)
-- [ ] 6.2 迁移 goPage.js 路由工具
-- [ ] 6.3 迁移 jumpMap.js 地图工具
-
----
-
-## 阶段七：资源迁移
-
-- [ ] 7.1 迁移 static/ 图片资源
-- [ ] 7.2 迁移 unocss 样式到 Compose Theme
-- [ ] 7.3 迁移 App.vue 全局样式
-
----
-
-## 阶段八：测试与优化
+## 阶段六：测试与优化
 
 - [ ] 8.1 运行单元测试
 - [ ] 8.2 运行 lint 检查

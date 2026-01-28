@@ -212,8 +212,6 @@ fun EventDetailScreen(
                     // 详情内容
                     when (activeTab) {
                         0 -> {
-                            item { MainDetailTab(eventDetail = eventDetail) }
-                            item { Spacer(modifier = Modifier.height(16.dp)) }
                             item {
                                 OutlinedButton(
                                     onClick = {
@@ -223,14 +221,14 @@ fun EventDetailScreen(
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
                                 ) {
                                     Icon(Icons.Default.Person, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("参赛名单")
                                 }
                             }
-                            item { Spacer(modifier = Modifier.height(16.dp)) }
+                            item { MainDetailTab(eventDetail = eventDetail) }
                         }
                         1 -> {
                             item { ScheduleTab(onNavigateToScore = { onNavigateToScore(activeItemId ?: "") }) }
