@@ -18,9 +18,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import dev.mlzzen.kaiqiu.data.remote.HttpClient
 import dev.mlzzen.kaiqiu.ui.state.LocalUserState
 import dev.mlzzen.kaiqiu.ui.state.UserState
 import androidx.compose.ui.graphics.vector.ImageVector
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -163,6 +165,14 @@ fun ProfileScreen(
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
 
+            // 每日签到
+            if (isLoggedIn) {
+                item {
+                    SignInButton()
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
             item {
@@ -285,5 +295,63 @@ private fun ProfileMenuGroup(title: String, items: List<MenuItem>) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SignInButton() {
+    val scope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(false) }
+    var signedToday by remember { mutableStateOf(false) }
+
+    fun checkSignStatus() {
+        scope.launch {
+            try {
+                val response = HttpClient.api.getDaySign()
+                if (response.isSuccess) {
+                    signedToday = response.data?.msg?.contains("已签到") == true
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        checkSignStatus()
+    }
+
+    Button(
+        onClick = {
+            if (!isLoading && !signedToday) {
+                isLoading = true
+                scope.launch {
+                    try {
+                        val response = HttpClient.api.getDaySign()
+                        if (response.isSuccess) {
+                            signedToday = true
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        isLoading = false
+                    }
+                }
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        enabled = !signedToday && !isLoading,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (signedToday) Color(0xFF39B54A) else MaterialTheme.colorScheme.primary
+        )
+    ) {
+        Icon(
+            if (signedToday) Icons.Default.Check else Icons.Default.Add,
+            contentDescription = null
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(if (signedToday) "今日已签到" else "每日签到")
     }
 }
