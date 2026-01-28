@@ -1,5 +1,6 @@
 package dev.mlzzen.kaiqiu.data.repository
 
+import android.util.Log
 import dev.mlzzen.kaiqiu.data.remote.*
 
 /**
@@ -43,6 +44,9 @@ class UserRepository(
     suspend fun getMatchListHisByPage(page: Int): Result<List<EventHistory>> {
         return Result.safeApiCall {
             val response = api.getMatchListHisByPage(mapOf("page" to page.toString(), "index" to "0"))
+            android.util.Log.d("UserEventsAPI", "getMatchListHisByPage response: code=${response.code}, msg=${response.msg}")
+            android.util.Log.d("UserEventsAPI", "getMatchListHisByPage data type: ${response.data?.javaClass?.simpleName}")
+            android.util.Log.d("UserEventsAPI", "getMatchListHisByPage data: ${response.data}")
             if (response.isSuccess) response.data ?: emptyList<EventHistory>() else emptyList()
         }
     }
