@@ -361,15 +361,15 @@ data class EventHistoryResponse(
 
 data class EventHistoryData(
     @SerializedName("total")
-    val total: Int,
+    val total: String?,
     @SerializedName("per_page")
-    val perPage: Int,
+    val perPage: String?,
     @SerializedName("current_page")
-    val currentPage: Int,
+    val currentPage: String?,
     @SerializedName("last_page")
-    val lastPage: Int,
+    val lastPage: String?,
     @SerializedName("data")
-    val data: List<EventHistory>
+    val data: List<EventHistory>?
 )
 
 /**

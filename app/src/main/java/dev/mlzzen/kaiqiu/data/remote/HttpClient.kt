@@ -1,11 +1,12 @@
 package dev.mlzzen.kaiqiu.data.remote
 
 import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
@@ -16,6 +17,8 @@ object HttpClient {
     const val BASE_URL = "https://kaiqiuwang.cc/xcx/public/index.php/api/"
     const val TIMEOUT_SECONDS = 30L
     private const val TAG = "HttpClient"
+    private const val TAG_GSON = "GsonParse"
+    private val gson = Gson()
 
     private var authToken: String? = null
 
@@ -115,9 +118,60 @@ object HttpClient {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
+    /**
+     * Gson 解析日志拦截器
+     * 在响应返回后尝试用 Gson 解析，打印解析日志
+     */
+    private val gsonLoggingInterceptor = Interceptor { chain ->
+        val request = chain.request()
+        val response = chain.proceed(request)
+
+        val responseBody = response.body
+        val source = responseBody?.source()
+        source?.request(Long.MAX_VALUE)
+        val buffer = source?.buffer
+        val jsonString = buffer?.clone()?.readUtf8() ?: ""
+
+        if (jsonString.isNotEmpty()) {
+            Log.d(TAG_GSON, "=== Gson 解析开始 ===")
+            Log.d(TAG_GSON, "URL: ${request.url}")
+            Log.d(TAG_GSON, "原始 JSON: $jsonString")
+
+            // 尝试解析为 ApiResponse
+            try {
+                val apiResponse = gson.fromJson(jsonString, ApiResponse::class.java)
+                Log.d(TAG_GSON, "ApiResponse.code: ${apiResponse.code}, msg: ${apiResponse.msg}")
+                if (apiResponse.isSuccess && apiResponse.data != null) {
+                    Log.d(TAG_GSON, "ApiResponse.data 类型: ${apiResponse.data::class.simpleName}")
+
+                    // 尝试将 data 解析为 EventHistoryResponse
+                    val innerJson = gson.toJson(apiResponse.data)
+                    Log.d(TAG_GSON, "inner data JSON: $innerJson")
+
+                    val eventHistoryResponse = gson.fromJson(innerJson, EventHistoryResponse::class.java)
+                    Log.d(TAG_GSON, "EventHistoryResponse.data 类型: ${eventHistoryResponse.data::class.simpleName}")
+                }
+                Log.d(TAG_GSON, "Gson 解析成功")
+            } catch (e: JsonSyntaxException) {
+                Log.e(TAG_GSON, "Gson 解析失败!!!")
+                Log.e(TAG_GSON, "错误类型: ${e.javaClass.simpleName}")
+                Log.e(TAG_GSON, "错误信息: ${e.message}")
+                e.printStackTrace()
+            } catch (e: Exception) {
+                Log.e(TAG_GSON, "Gson 解析异常: ${e.javaClass.simpleName}: ${e.message}")
+                e.printStackTrace()
+            }
+
+            Log.d(TAG_GSON, "=== Gson 解析结束 ===")
+        }
+
+        response
+    }
+
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
         .addInterceptor(loggingInterceptor)
+        .addInterceptor(gsonLoggingInterceptor)
         .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)

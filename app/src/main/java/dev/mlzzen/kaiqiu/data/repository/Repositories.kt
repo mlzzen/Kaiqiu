@@ -1,7 +1,10 @@
 package dev.mlzzen.kaiqiu.data.repository
 
 import android.util.Log
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import dev.mlzzen.kaiqiu.data.remote.*
+import dev.mlzzen.kaiqiu.data.remote.HttpClient
 
 /**
  * 用户相关 API 仓库
@@ -9,6 +12,8 @@ import dev.mlzzen.kaiqiu.data.remote.*
 class UserRepository(
     private val api: ApiService = HttpClient.api
 ) {
+    private val gson = Gson()
+
     suspend fun login(account: String, password: String): Result<LoginResponse> {
         return Result.safeApiCall {
             api.login(mapOf("account" to account, "password" to password))
@@ -42,14 +47,39 @@ class UserRepository(
     }
 
     suspend fun getMatchListHisByPage(page: Int): Result<List<EventHistory>> {
+        android.util.Log.d("UserEventsAPI", "=== getMatchListHisByPage ===")
         return Result.safeApiCall {
-            val response = api.getMatchListHisByPage(mapOf("page" to page.toString(), "index" to "0"))
-            android.util.Log.d("UserEventsAPI", "response.code=${response.code}")
-            if (response.isSuccess) {
-                val list = response.data?.data?.data ?: emptyList()
-                android.util.Log.d("UserEventsAPI", "events count: ${list.size}")
-                list
-            } else {
+            android.util.Log.d("UserEventsAPI", "calling API...")
+            try {
+                // 使用原始 Response 拿到 JSON 字符串
+                val rawResponse = api.getMatchListHisByPageRaw(mapOf("page" to page.toString(), "index" to "0"))
+                val jsonString = rawResponse.string()
+
+                android.util.Log.d("UserEventsAPI", "raw JSON: $jsonString")
+
+                // 解析外层 ApiResponse
+                val apiResponseType = object : TypeToken<ApiResponse<*>>() {}.type
+                val apiResponse: ApiResponse<*> = gson.fromJson(jsonString, apiResponseType)
+
+                android.util.Log.d("UserEventsAPI", "apiResponse.code=${apiResponse.code}")
+
+                if (apiResponse.isSuccess) {
+                    // 解析内层 data 为 EventHistoryData
+                    val dataJson = gson.toJson(apiResponse.data)
+                    android.util.Log.d("UserEventsAPI", "dataJson: $dataJson")
+
+                    val eventHistoryData: EventHistoryData = gson.fromJson(dataJson, EventHistoryData::class.java)
+                    val list = eventHistoryData.data ?: emptyList()
+
+                    android.util.Log.d("UserEventsAPI", "events count: ${list.size}")
+                    list
+                } else {
+                    android.util.Log.d("UserEventsAPI", "API failed: ${apiResponse.msg}")
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                android.util.Log.d("UserEventsAPI", "Exception during API call: ${e.message}")
+                e.printStackTrace()
                 emptyList()
             }
         }

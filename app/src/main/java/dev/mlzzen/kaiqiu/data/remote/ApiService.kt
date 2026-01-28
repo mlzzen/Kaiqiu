@@ -32,6 +32,9 @@ interface ApiService {
     @POST("center/events")
     suspend fun getMatchListHisByPage(@Body body: Map<String, String>): ApiResponse<EventHistoryResponse>
 
+    @POST("center/events")
+    suspend fun getMatchListHisByPageRaw(@Body body: Map<String, String>): okhttp3.ResponseBody
+
     @GET("User/followee")
     suspend fun goFolloweeByUid(@Query("uid") uid: String): ApiResponse<Unit>
 
