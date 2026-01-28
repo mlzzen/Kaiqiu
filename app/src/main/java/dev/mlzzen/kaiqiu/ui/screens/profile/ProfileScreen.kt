@@ -57,42 +57,38 @@ fun ProfileScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable(enabled = isLoggedIn) {
+                                userInfo?.uid?.let { onNavigateToUserDetail(it) }
+                            }
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // 头像（点击进入用户详情）
+                        // 头像
                         if (isLoggedIn) {
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(MaterialTheme.shapes.large)
-                                    .clickable {
-                                        userInfo?.uid?.let { onNavigateToUserDetail(it) }
-                                    }
-                            ) {
-                                if (!userInfo?.image.isNullOrEmpty()) {
-                                    AsyncImage(
-                                        model = userInfo?.image?.let {
-                                            if (!it.startsWith("http")) "https:$it" else it
-                                        },
-                                        contentDescription = "头像",
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Surface(
-                                        modifier = Modifier.fillMaxSize(),
-                                        shape = MaterialTheme.shapes.large,
-                                        color = MaterialTheme.colorScheme.primaryContainer
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                Icons.Default.Person,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(40.dp),
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                            )
-                                        }
+                            if (!userInfo?.image.isNullOrEmpty()) {
+                                AsyncImage(
+                                    model = userInfo?.image?.let {
+                                        if (!it.startsWith("http")) "https:$it" else it
+                                    },
+                                    contentDescription = "头像",
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clip(MaterialTheme.shapes.large),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Surface(
+                                    modifier = Modifier.size(64.dp),
+                                    shape = MaterialTheme.shapes.large,
+                                    color = MaterialTheme.colorScheme.primaryContainer
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Default.Person,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(40.dp),
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
                                     }
                                 }
                             }
