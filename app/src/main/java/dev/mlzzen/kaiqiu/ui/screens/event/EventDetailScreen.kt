@@ -218,7 +218,7 @@ fun EventDetailScreen(
                                 OutlinedButton(
                                     onClick = {
                                         activeItemId?.let { itemId ->
-                                            onNavigateToMembers(itemId, itemId)
+                                            onNavigateToMembers(eventDetail?.eventid ?: "", itemId)
                                         }
                                     },
                                     modifier = Modifier
