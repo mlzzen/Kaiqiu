@@ -28,18 +28,41 @@ fun UserDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEvents: () -> Unit
 ) {
+    android.util.Log.d("UserDetail", "UserDetailScreen init, uid=$uid")
     val userRepository = remember { UserRepository() }
     var profile by remember { mutableStateOf<AdvProfile?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(uid) {
+        android.util.Log.d("UserDetail", "LaunchedEffect triggered, uid=$uid")
         isLoading = true
-        when (val result = userRepository.getAdvProfile(uid)) {
-            is Result.Success -> profile = result.data
-            is Result.Error -> profile = null
-            is Result.Loading -> {}
+        android.util.Log.d("UserDetail", "=== getAdvProfile uid=$uid ===")
+        try {
+            val result = userRepository.getAdvProfile(uid)
+            android.util.Log.d("UserDetail", "getAdvProfile result type: ${result::class.simpleName}")
+            when (result) {
+                is Result.Success -> {
+                    profile = result.data
+                    android.util.Log.d("UserDetail", "getAdvProfile success: $profile")
+                    android.util.Log.d("UserDetail", "  nickname: ${profile?.nickname}")
+                    android.util.Log.d("UserDetail", "  avatar: ${profile?.avatar}")
+                    android.util.Log.d("UserDetail", "  scores: ${profile?.scores}")
+                }
+                is Result.Error -> {
+                    profile = null
+                    android.util.Log.d("UserDetail", "getAdvProfile error: ${result.exception}")
+                    result.exception.printStackTrace()
+                }
+                is Result.Loading -> {
+                    android.util.Log.d("UserDetail", "getAdvProfile loading")
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.d("UserDetail", "getAdvProfile exception: ${e.message}")
+            e.printStackTrace()
         }
         isLoading = false
+        android.util.Log.d("UserDetail", "isLoading=$isLoading, profile=$profile")
     }
 
     Scaffold(

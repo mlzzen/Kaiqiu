@@ -51,15 +51,18 @@ fun ProfileScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    onClick = { if (!isLoggedIn) onNavigateToLogin() }
+                        .padding(16.dp)
+                        .clickable {
+                            if (isLoggedIn) {
+                                userInfo?.uid?.let { onNavigateToUserDetail(it) }
+                            } else {
+                                onNavigateToLogin()
+                            }
+                        }
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = isLoggedIn) {
-                                userInfo?.uid?.let { onNavigateToUserDetail(it) }
-                            }
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
