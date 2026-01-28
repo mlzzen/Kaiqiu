@@ -102,7 +102,6 @@ jobs:
           name: signing-key
           path: app/
         env:
-          # 从 Secrets 获取 Base64 编码的 keystore
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -112,12 +111,8 @@ jobs:
             echo "还原签名密钥..."
             echo "$KEYSTORE_BASE64" | base64 -d > app/keystore.jks
             # 更新 keystore.properties
-            cat > app/keystore.properties << EOF
-storeFile=keystore.jks
-storePassword=$KEYSTORE_PASSWORD
-keyAlias=$KEY_ALIAS
-keyPassword=$KEY_PASSWORD
-EOF
+            printf 'storeFile=keystore.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+              "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > app/keystore.properties
             echo "密钥还原成功"
           else
             echo "警告: 未配置签名密钥，release 构建将跳过签名"
