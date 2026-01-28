@@ -145,18 +145,23 @@ data class GameRecord(
 
 /**
  * 赛事历史
+ * 参考源项目 eventHis.vue
  */
 data class EventHistory(
     @SerializedName("eventid")
     val eventid: String,
     @SerializedName("title")
     val title: String?,
-    @SerializedName("startTime")
-    val startTime: String?,
-    @SerializedName("endTime")
-    val endTime: String?,
-    @SerializedName("status")
-    val status: String?
+    @SerializedName("poster")
+    val poster: String?,
+    @SerializedName("province")
+    val province: String?,
+    @SerializedName("city")
+    val city: String?,
+    @SerializedName("viewnum")
+    val viewnum: String?,
+    @SerializedName("membernum")
+    val membernum: String?
 )
 
 /**

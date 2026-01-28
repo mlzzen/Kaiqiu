@@ -165,6 +165,9 @@ fun KaiqiuNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToMatch = { gameid ->
                     navController.navigate(Screen.MatchDetail.createRoute(gameid))
+                },
+                onNavigateToEvent = { eventid ->
+                    navController.navigate(Screen.EventDetail.createRoute(eventid))
                 }
             )
         }
