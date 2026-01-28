@@ -19,6 +19,7 @@ import dev.mlzzen.kaiqiu.ui.screens.profile.ProfileScreen
 import dev.mlzzen.kaiqiu.ui.screens.search.SearchScreen
 import dev.mlzzen.kaiqiu.ui.screens.search.Top100Screen
 import dev.mlzzen.kaiqiu.ui.screens.search.TopSearchScreen
+import dev.mlzzen.kaiqiu.ui.screens.search.RankScreen
 import dev.mlzzen.kaiqiu.ui.screens.user.FollowedPlayersScreen
 import dev.mlzzen.kaiqiu.ui.screens.user.UserDetailScreen
 import dev.mlzzen.kaiqiu.ui.screens.user.UserEventsScreen
@@ -100,6 +101,15 @@ fun KaiqiuNavHost(
 
         composable(Screen.Top100.route) {
             Top100Screen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUser = { uid ->
+                    navController.navigate(Screen.UserDetail.createRoute(uid))
+                }
+            )
+        }
+
+        composable(Screen.Rank.route) {
+            RankScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToUser = { uid ->
                     navController.navigate(Screen.UserDetail.createRoute(uid))

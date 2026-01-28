@@ -165,10 +165,16 @@ data class UserItem(
     val uid: String,
     @SerializedName("nickname")
     val nickname: String?,
+    @SerializedName("realname")
+    val realname: String?,
     @SerializedName("avatar")
     val avatar: String?,
     @SerializedName("city")
     val city: String?,
+    @SerializedName("sex")
+    val sex: String?,
+    @SerializedName("score")
+    val score: String?,
     @SerializedName("scores")
     val scores: UserScores?
 )
