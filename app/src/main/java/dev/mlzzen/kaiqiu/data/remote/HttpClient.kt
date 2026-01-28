@@ -1,7 +1,9 @@
 package dev.mlzzen.kaiqiu.data.remote
 
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -14,6 +16,7 @@ object HttpClient {
 
     const val BASE_URL = "https://kaiqiuwang.cc/xcx/public/index.php/api/"
     const val TIMEOUT_SECONDS = 30L
+    private const val TAG = "HttpClient"
 
     private var authToken: String? = null
 
@@ -34,7 +37,9 @@ object HttpClient {
         chain.proceed(request.build())
     }
 
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
+    private val loggingInterceptor = HttpLoggingInterceptor { message ->
+        Log.d(TAG, message)
+    }.apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
