@@ -40,7 +40,7 @@ class UserRepository(
         }
     }
 
-    suspend fun getPageGamesByUid(uid: String, page: Int): Result<List<GameRecord>> {
+    suspend fun getPageGamesByUid(uid: String, page: Int): Result<GameRecordsResponse> {
         return Result.safeApiCall {
             api.getPageGamesByUid(uid, page).getOrThrow()
         }

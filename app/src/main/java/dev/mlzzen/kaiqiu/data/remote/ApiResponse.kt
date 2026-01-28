@@ -104,11 +104,88 @@ data class AdvProfile(
     @SerializedName("sex")
     val sex: String?,
     @SerializedName("age")
-    val age: String?,
+    val age: Any?,  // API 可能返回 33 或 33.0
     @SerializedName("resideprovince")
     val resideprovince: String?,
     @SerializedName("description")
-    val description: String?
+    val description: String?,
+    @SerializedName("bg")
+    val bg: String?,           // 专业背景
+    @SerializedName("qiupai")
+    val qiupai: String?,       // 底板品牌
+    @SerializedName("qiupaitype")
+    val qiupaitype: String?,   // 底板型号
+    @SerializedName("zhengshou")
+    val zhengshou: String?,    // 正手套胶品牌
+    @SerializedName("zhengshoutype")
+    val zhengshoutype: String?,// 正手套胶型号
+    @SerializedName("fanshou")
+    val fanshou: String?,      // 反手套胶品牌
+    @SerializedName("fanshoutype")
+    val fanshoutype: String?,  // 反手套胶型号
+    @SerializedName("Top3OfBeatUsernameScore")
+    val top3OfBeatUsernameScore: List<String>?, // 击败分数最高前三名
+    @SerializedName("TopPlayerUsernameScore")
+    val topPlayerUsernameScore: List<String>?,  // 交手分数最高前三名
+    @SerializedName("Top3ManOfBeatUsernameScore")
+    val top3ManOfBeatUsernameScore: List<String>?, // 击败男子最高前三名
+    @SerializedName("Top3WomanOfBeatUsernameScore")
+    val top3WomanOfBeatUsernameScore: List<String>?, // 击败女子最高前三名
+    @SerializedName("OftenPlayer")
+    val oftenPlayer: String?,   // 经常交手
+    @SerializedName("allCities")
+    val allCities: List<String>?,     // 曾参加比赛城市
+    @SerializedName("win")
+    val win: String?,           // 胜场
+    @SerializedName("lose")
+    val lose: String?,          // 负场
+    @SerializedName("total")
+    val total: String?,         // 总场次
+    @SerializedName("beat")
+    val beat: String?,          // 击败的最高分选手
+    @SerializedName("province")
+    val province: String?,      // 省份
+    @SerializedName("city")
+    val city: String?,          // 城市
+    @SerializedName("ifHonor")
+    val ifHonor: Any?,          // 是否有荣誉
+    @SerializedName("honors")
+    val honors: Any?,           // 荣誉数据（API可能返回数组或空）
+    @SerializedName("games")
+    val games: GamesWrapper?    // 近期战绩
+)
+
+data class GameListWrapper(
+    @SerializedName("data")
+    val data: List<GameRecord>?
+)
+
+/**
+ * 游戏记录包装类（用于用户详情页 games 字段）
+ * API 返回格式: {"data": [...games...]}
+ */
+data class GamesWrapper(
+    @SerializedName("data")
+    val data: List<GameRecord>?
+)
+
+/**
+ * 用户比赛记录响应（用于 getGames API）
+ * API 返回格式: {"code":1,"data":{"data":[...]}}
+ */
+data class GameRecordsResponse(
+    @SerializedName("data")
+    val data: List<GameRecord>?
+)
+
+/**
+ * 荣誉图标项（用于用户详情页）
+ */
+data class HonorIconItem(
+    @SerializedName("honor")
+    val honor: String?,
+    @SerializedName("subject")
+    val subject: String?
 )
 
 /**
@@ -142,18 +219,56 @@ data class ScoreHistory(
  */
 data class GameRecord(
     @SerializedName("gameid")
-    val gameid: String,
+    val gameid: String?,
+    @SerializedName("title")
+    val title: String?,            // 赛事标题
     @SerializedName("eventTitle")
-    val eventTitle: String?,
-    @SerializedName("myScore")
-    val myScore: String?,
-    @SerializedName("opponentScore")
-    val opponentScore: String?,
-    @SerializedName("result")
-    val result: String?,
-    @SerializedName("createTime")
-    val createTime: String?
-)
+    val eventTitle: String?,       // 赛事标题（备用）
+    @SerializedName("result1")
+    val result1: String?,          // 我方得分
+    @SerializedName("result2")
+    val result2: String?,          // 对方得分
+    @SerializedName("username1")
+    val username1: String?,        // 我方姓名
+    @SerializedName("username2")
+    val username2: String?,        // 对方姓名
+    @SerializedName("dateline")
+    val dateline: String?,         // 比赛时间
+    @SerializedName("groupid")
+    val groupid: Int?,             // 小组赛标识
+    @SerializedName("flag")
+    val flag: Int?,                // 比赛标识
+    @SerializedName("uid2")
+    val uid2: String?              // 对方用户ID
+) {
+    // 获取赛事标题
+    val eventTitleOrTitle: String?
+        get() = eventTitle ?: title ?: ""
+
+    // 获取比赛日期
+    val matchDate: String?
+        get() = dateline
+
+    // 获取比分文本
+    val scoreText: String
+        get() = "${result1 ?: "0"}:${result2 ?: "0"}"
+
+    // 获取对手名称
+    val opponentName: String?
+        get() = username2
+
+    // 判断是否胜利
+    val isWin: Boolean
+        get() {
+            val r1 = result1?.toIntOrNull() ?: 0
+            val r2 = result2?.toIntOrNull() ?: 0
+            return r1 > r2
+        }
+
+    // 判断是否小组赛
+    val isGroupMatch: Boolean
+        get() = groupid != null && groupid > 0
+}
 
 /**
  * 赛事历史

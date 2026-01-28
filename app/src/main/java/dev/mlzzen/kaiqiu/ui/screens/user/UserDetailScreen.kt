@@ -2,7 +2,19 @@ package dev.mlzzen.kaiqiu.ui.screens.user
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -29,13 +41,17 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import dev.mlzzen.kaiqiu.data.remote.AdvProfile
 import dev.mlzzen.kaiqiu.data.remote.GameRecord
+import dev.mlzzen.kaiqiu.data.remote.GameRecordsResponse
 import dev.mlzzen.kaiqiu.data.remote.HttpClient
+import dev.mlzzen.kaiqiu.data.remote.HonorIconItem
 import dev.mlzzen.kaiqiu.data.remote.ScoreHistory
 import dev.mlzzen.kaiqiu.data.repository.Result
 import dev.mlzzen.kaiqiu.data.repository.UserRepository
 import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun UserDetailScreen(
     uid: String,
@@ -57,9 +73,25 @@ fun UserDetailScreen(
         }
         // 加载积分历史
         try {
-            val scoreResponse = HttpClient.api.getUserScores(uid)
-            if (scoreResponse.isSuccess) {
-                scoreHistory = scoreResponse.data ?: emptyList()
+            val gson = Gson()
+            val rawResponse = HttpClient.api.getUserScoresRaw(uid)
+            val jsonString = rawResponse.string()
+            android.util.Log.d("UserDetailScreen", "getUserScores raw response: $jsonString")
+            // 尝试直接解析为数组
+            try {
+                val type = object : TypeToken<List<ScoreHistory>>() {}.type
+                scoreHistory = gson.fromJson(jsonString, type)
+            } catch (e: Exception) {
+                // 如果直接解析失败，尝试通过 ApiResponse 解析
+                try {
+                    val apiResponseType = object : TypeToken<dev.mlzzen.kaiqiu.data.remote.ApiResponse<List<ScoreHistory>>>() {}.type
+                    val apiResponse: dev.mlzzen.kaiqiu.data.remote.ApiResponse<List<ScoreHistory>> = gson.fromJson(jsonString, apiResponseType)
+                    if (apiResponse.isSuccess) {
+                        scoreHistory = apiResponse.data ?: emptyList()
+                    }
+                } catch (e2: Exception) {
+                    android.util.Log.e("UserDetailScreen", "Failed to parse score history: ${e2.message}")
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -68,7 +100,7 @@ fun UserDetailScreen(
         try {
             val response = HttpClient.api.getPageGamesByUid(uid, 1)
             if (response.isSuccess) {
-                gameRecords = response.data ?: emptyList()
+                gameRecords = response.data?.data ?: emptyList()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -146,6 +178,65 @@ fun UserDetailScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = TextSecondary
                                 )
+                                // 年龄、性别、城市
+                                val ageText = when (val age = profile?.age) {
+                                    is Int -> "${age}岁"
+                                    is Double -> "${age.toInt()}岁"
+                                    is String -> if (age.isNotBlank()) "${age}岁" else ""
+                                    else -> ""
+                                }
+                                val sexText = profile?.sex ?: ""
+                                val cityText = profile?.city ?: ""
+                                val infoText = listOf(ageText, sexText, cityText).filter { it.isNotBlank() }.joinToString(" | ")
+                                if (infoText.isNotBlank()) {
+                                    Text(
+                                        infoText,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 战绩统计
+                profile?.let { p ->
+                    val winNum = p.win ?: "0"
+                    val loseNum = p.lose ?: "0"
+                    val totalNum = p.total ?: "0"
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(winNum, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFF39B54A))
+                                    Text("胜", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(loseNum, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFFE6326E))
+                                    Text("负", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(totalNum, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                    Text("总场", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                                // 击败的最高分选手
+                                p.beat?.takeIf { it.isNotBlank() }?.let { beat ->
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(beat, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                        Text("最高分", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    }
+                                }
                             }
                         }
                     }
@@ -153,6 +244,7 @@ fun UserDetailScreen(
 
                 // 操作按钮
                 item {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -201,61 +293,210 @@ fun UserDetailScreen(
                     }
                 }
 
-                // 专业背景和底板型号
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("装备信息", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+                // 专业背景和装备信息
+                profile?.let { p ->
+                    val hasEquipment = !p.bg.isNullOrBlank() || !p.qiupai.isNullOrBlank() ||
+                            !p.zhengshou.isNullOrBlank() || !p.fanshou.isNullOrBlank()
+                    if (hasEquipment || !p.description.isNullOrBlank()) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("装备信息", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
 
-                item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            DetailRow("专业背景", profile?.description ?: "暂未填写")
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                            DetailRow("底板型号", "暂未填写")
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    if (!p.description.isNullOrBlank()) {
+                                        DetailRow("专业背景", p.description)
+                                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                    }
+                                    if (!p.qiupai.isNullOrBlank() || !p.qiupaitype.isNullOrBlank()) {
+                                        DetailRow("底板型号", "${p.qiupai ?: ""} ${p.qiupaitype ?: ""}".trim())
+                                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                    }
+                                    if (!p.zhengshou.isNullOrBlank() || !p.zhengshoutype.isNullOrBlank()) {
+                                        DetailRow("正手套胶", "${p.zhengshou ?: ""} ${p.zhengshoutype ?: ""}".trim())
+                                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                    }
+                                    if (!p.fanshou.isNullOrBlank() || !p.fanshoutype.isNullOrBlank()) {
+                                        DetailRow("反手套胶", "${p.fanshou ?: ""} ${p.fanshoutype ?: ""}".trim())
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
                 // 击败分数最高前三名
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("击败对手 TOP3", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("暂无击败记录", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                profile?.top3OfBeatUsernameScore?.takeIf { it?.isNotEmpty() == true }?.let { top3 ->
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("击败分数最高前三名", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                top3.filter { it.isNotBlank() }.forEach { item ->
+                                    Text("• $item", style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
                         }
                     }
                 }
 
                 // 交手分数最高前三名
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("交手记录 TOP3", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
-                    Spacer(modifier = Modifier.height(8.dp))
+                profile?.topPlayerUsernameScore?.takeIf { it?.isNotEmpty() == true }?.let { top3 ->
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("交手分数最高前三名", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                top3.filter { it.isNotBlank() }.forEach { item ->
+                                    Text("• $item", style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
                 }
 
-                item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("暂无交手记录", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                // 击败男子最高前三名
+                profile?.top3ManOfBeatUsernameScore?.takeIf { it?.isNotEmpty() == true }?.let { top3 ->
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("击败男子最高前三名", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                top3.filter { it.isNotBlank() }.forEach { item ->
+                                    Text("• $item", style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 击败女子最高前三名
+                profile?.top3WomanOfBeatUsernameScore?.takeIf { it?.isNotEmpty() == true }?.let { top3 ->
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("击败女子最高前三名", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                top3.filter { it.isNotBlank() }.forEach { item ->
+                                    Text("• $item", style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 经常交手
+                profile?.oftenPlayer?.takeIf { it.isNotBlank() }?.let { players ->
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("经常交手", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                players.split(",").filter { it.isNotBlank() }.forEach { player ->
+                                    Text("• $player", style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 曾参加比赛城市
+                profile?.allCities?.takeIf { it?.isNotEmpty() == true }?.let { cities ->
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("曾参加比赛城市", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    cities.forEach { city ->
+                                        AssistChip(
+                                            onClick = { },
+                                            label = { Text(city, style = MaterialTheme.typography.bodySmall) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 近期荣耀
+                val honorsList = profile?.honors?.let { honorData ->
+                    when (honorData) {
+                        is List<*> -> honorData.filterIsInstance<HonorIconItem>()
+                        else -> emptyList<HonorIconItem>()
+                    }
+                }?.takeIf { it.isNotEmpty() }
+                if (honorsList != null) {
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("近期荣耀", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                honorsList.forEach { honor ->
+                                    HonorRow(honor = honor)
+                                }
+                            }
                         }
                     }
                 }
@@ -267,7 +508,8 @@ fun UserDetailScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                if (gameRecords.isEmpty()) {
+                val displayRecords = profile?.games?.data ?: gameRecords
+                if (displayRecords.isEmpty()) {
                     item {
                         Card(
                             modifier = Modifier
@@ -285,7 +527,7 @@ fun UserDetailScreen(
                         }
                     }
                 } else {
-                    items(gameRecords.take(10)) { record ->
+                    items(displayRecords.take(10)) { record ->
                         GameRecordItem(record = record)
                     }
                 }
@@ -493,8 +735,16 @@ private fun ScoreTrendChart(scoreHistory: List<ScoreHistory>, modifier: Modifier
 
 @Composable
 private fun GameRecordItem(record: GameRecord) {
-    val isWin = record.result?.contains("胜") == true
+    val isWin = record.isWin
     val resultColor = if (isWin) Color(0xFF39B54A) else Color(0xFFE6326E)
+
+    // 胜负标记
+    val resultText = when {
+        record.isGroupMatch && isWin -> "胜"
+        record.isGroupMatch && !isWin -> "负"
+        isWin -> "胜"
+        else -> "负"
+    }
 
     Card(
         modifier = Modifier
@@ -508,28 +758,47 @@ private fun GameRecordItem(record: GameRecord) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = record.result ?: "-",
+                text = resultText,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = resultColor,
-                modifier = Modifier.width(50.dp)
+                modifier = Modifier.width(40.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = record.eventTitle ?: "未知赛事",
+                    text = record.eventTitleOrTitle?.ifBlank { "未知赛事" } ?: "未知赛事",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = record.createTime ?: "",
+                    text = record.matchDate ?: "",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
             }
             Text(
-                text = "${record.myScore ?: 0} : ${record.opponentScore ?: 0}",
+                text = record.scoreText,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                color = if (record.isGroupMatch) Color(0xFFF89703) else MaterialTheme.colorScheme.onSurface
             )
         }
+    }
+}
+
+@Composable
+private fun HonorRow(honor: HonorIconItem) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AsyncImage(
+            model = honor.honor,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(honor.subject ?: "", style = MaterialTheme.typography.bodyMedium)
     }
 }

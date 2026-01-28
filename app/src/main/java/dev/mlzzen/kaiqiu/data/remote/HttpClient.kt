@@ -135,21 +135,49 @@ object HttpClient {
         if (jsonString.isNotEmpty()) {
             Log.d(TAG_GSON, "=== Gson 解析开始 ===")
             Log.d(TAG_GSON, "URL: ${request.url}")
-            Log.d(TAG_GSON, "原始 JSON: $jsonString")
+            Log.d(TAG_GSON, "原始 JSON (前500字符): ${jsonString.take(500)}")
+
+            // 首先检查是否是纯数组响应（非 ApiResponse 包装）
+            val trimmedJson = jsonString.trim()
+            if (trimmedJson.startsWith("[")) {
+                Log.d(TAG_GSON, "检测到纯数组响应，无需通过 ApiResponse 包装解析")
+                Log.d(TAG_GSON, "=== Gson 解析结束 ===")
+                return@Interceptor response
+            }
 
             // 尝试解析为 ApiResponse
             try {
                 val apiResponse = gson.fromJson(jsonString, ApiResponse::class.java)
                 Log.d(TAG_GSON, "ApiResponse.code: ${apiResponse.code}, msg: ${apiResponse.msg}")
-                if (apiResponse.isSuccess && apiResponse.data != null) {
+
+                if (apiResponse.data == null) {
+                    Log.d(TAG_GSON, "ApiResponse.data 为 null")
+                } else {
                     Log.d(TAG_GSON, "ApiResponse.data 类型: ${apiResponse.data::class.simpleName}")
 
-                    // 尝试将 data 解析为 EventHistoryResponse
-                    val innerJson = gson.toJson(apiResponse.data)
-                    Log.d(TAG_GSON, "inner data JSON: $innerJson")
+                    // 如果 data 是数字类型
+                    if (apiResponse.data is Number) {
+                        Log.d(TAG_GSON, "data 是数字类型: ${apiResponse.data}")
+                    }
 
-                    val eventHistoryResponse = gson.fromJson(innerJson, EventHistoryResponse::class.java)
-                    Log.d(TAG_GSON, "EventHistoryResponse.data 类型: ${eventHistoryResponse.data::class.simpleName}")
+                    // 安全地检查 data 是否是数组
+                    try {
+                        val dataJson = gson.toJson(apiResponse.data)
+                        if (dataJson.trim().startsWith("[")) {
+                            Log.d(TAG_GSON, "data 是数组类型，不需要嵌套解析")
+                        } else {
+                            // 尝试将 data 解析为 EventHistoryResponse
+                            try {
+                                val eventHistoryResponse = gson.fromJson(dataJson, EventHistoryResponse::class.java)
+                                val dataType = eventHistoryResponse.data?.javaClass?.simpleName ?: "null"
+                                Log.d(TAG_GSON, "EventHistoryResponse.data 类型: $dataType")
+                            } catch (e: Exception) {
+                                Log.e(TAG_GSON, "EventHistoryResponse 解析失败: ${e.message}")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG_GSON, "检查 data 类型时出错: ${e.message}")
+                    }
                 }
                 Log.d(TAG_GSON, "Gson 解析成功")
             } catch (e: JsonSyntaxException) {

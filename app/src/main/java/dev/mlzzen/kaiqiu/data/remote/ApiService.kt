@@ -27,7 +27,7 @@ interface ApiService {
     suspend fun getPageGamesByUid(
         @Query("uid") uid: String,
         @Query("page") page: Int
-    ): ApiResponse<List<GameRecord>>
+    ): ApiResponse<GameRecordsResponse>
 
     @POST("center/events")
     suspend fun getMatchListHisByPage(@Body body: Map<String, String>): ApiResponse<EventHistoryResponse>
@@ -61,6 +61,9 @@ interface ApiService {
 
     @GET("User/getUserScores")
     suspend fun getUserScores(@Query("uid") uid: String): ApiResponse<List<ScoreHistory>>
+
+    @GET("User/getUserScores")
+    suspend fun getUserScoresRaw(@Query("uid") uid: String): okhttp3.ResponseBody
 
     // ============ Top ============
 
