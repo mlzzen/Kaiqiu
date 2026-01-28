@@ -171,6 +171,7 @@ fun ProfileScreen(
                     items = listOf(
                         MenuItem(Icons.Default.LocationOn, "城市选择", cityName, onNavigateToCitySelect),
                         MenuItem(Icons.Default.Star, "我的参赛", "查看参赛记录", {
+                            android.util.Log.d("ProfileDebug", "我的参赛 clicked, uid=${userInfo?.uid}")
                             userInfo?.uid?.let { onNavigateToUserEvents(it) }
                         }),
                         MenuItem(Icons.Default.Favorite, "我的关注", "关注的球友", {})
