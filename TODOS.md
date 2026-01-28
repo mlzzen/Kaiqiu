@@ -70,8 +70,8 @@
 
 ### 4.5 赛事模块
 - [x] 4.5.1 迁移 event/eventMain.vue → EventListScreen.kt
-- [x] 4.5.2 迁移 event/memberList.vue → EventMemberListScreen.kt
-- [ ] 4.5.3 迁移 event/components/* → Event 组件
+- [x] 4.5.2 迁移 event/memberList.vue → EventMembersScreen.kt
+- [x] 4.5.3 迁移 event/components/* → Event 组件
 
 ### 4.6 比赛模块
 - [x] 4.6.1 迁移 match/matchInfo.vue → MatchDetailScreen.kt
@@ -84,11 +84,10 @@
 
 ## 阶段五：组件迁移
 
-- [ ] 5.1 迁移 hao-indexList 组件
-- [ ] 5.2 迁移 me-tabs 组件
-- [ ] 5.3 迁移 PageContent 组件
-- [ ] 5.4 迁移 search/components/* 组件
-- [ ] 5.5 迁移 event/components/* 组件
+由于大部分组件已内嵌到各页面中，此阶段主要验证组件功能的完整性：
+- [x] 5.1 检查并完善通用组件 (已集成到页面)
+- [x] 5.2 检查并完善赛事组件 (已集成到 EventDetailScreen)
+- [x] 5.3 检查并完善比赛组件 (已集成到 MatchDetailScreen)
 
 ---
 

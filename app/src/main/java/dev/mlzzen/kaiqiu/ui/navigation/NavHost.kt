@@ -190,8 +190,8 @@ fun KaiqiuNavHost(
             EventDetailScreen(
                 eventid = eventid,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToMembers = {
-                    navController.navigate(Screen.EventMembers.createRoute(eventid))
+                onNavigateToMembers = { matchId, itemId ->
+                    navController.navigate(Screen.EventMembers.createRoute(eventid, matchId, itemId))
                 },
                 onNavigateToScore = { itemid ->
                     navController.navigate(Screen.ScoreEntry.createRoute(eventid, itemid))
@@ -201,11 +201,19 @@ fun KaiqiuNavHost(
 
         composable(
             route = Screen.EventMembers.route,
-            arguments = listOf(navArgument("eventid") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("eventid") { type = NavType.StringType },
+                navArgument("matchId") { type = NavType.StringType },
+                navArgument("itemId") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
             val eventid = backStackEntry.arguments?.getString("eventid") ?: ""
+            val matchId = backStackEntry.arguments?.getString("matchId") ?: ""
+            val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
             EventMembersScreen(
                 eventid = eventid,
+                matchId = matchId,
+                itemId = itemId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -508,7 +508,9 @@ data class EventDetail(
  */
 data class MemberDetail(
     @SerializedName("uid")
-    val uid: String,
+    val uid: String?,
+    @SerializedName("name")
+    val name: String?,
     @SerializedName("nickname")
     val nickname: String?,
     @SerializedName("avatar")
@@ -516,7 +518,29 @@ data class MemberDetail(
     @SerializedName("group")
     val group: String?,
     @SerializedName("seed")
-    val seed: Int?
+    val seed: Int?,
+    @SerializedName("score")
+    val score: Int?,
+    @SerializedName("newscore")
+    val newscore: String?,
+    @SerializedName("paid")
+    val paid: Int?,
+    @SerializedName("sex")
+    val sex: Int?,
+    @SerializedName("teamid")
+    val teamid: String?,
+    @SerializedName("mobile")
+    val mobile: String?,
+    @SerializedName("role")
+    val role: Int?
+)
+
+/**
+ * 参赛名单响应
+ */
+data class MemberListResponse(
+    @SerializedName("list")
+    val list: List<MemberDetail>
 )
 
 /**

@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 fun EventDetailScreen(
     eventid: String,
     onNavigateBack: () -> Unit,
-    onNavigateToMembers: () -> Unit,
+    onNavigateToMembers: (matchId: String, itemId: String) -> Unit,
     onNavigateToScore: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -193,7 +193,11 @@ fun EventDetailScreen(
                     0 -> MainDetailTab(
                         eventDetail = eventDetail,
                         crtItem = crtItem,
-                        onNavigateToMembers = onNavigateToMembers
+                        onNavigateToMembers = {
+                            activeItemId?.let { itemId ->
+                                onNavigateToMembers(eventid, itemId)
+                            }
+                        }
                     )
                     1 -> ScheduleTab(
                         crtItem = crtItem,

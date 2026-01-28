@@ -110,7 +110,7 @@ interface ApiService {
     suspend fun getEventDetaiByIdAndLocation(@QueryMap params: Map<String, String>): ApiResponse<EventDetail>
 
     @GET("enter/get_member_detail")
-    suspend fun getMemberDetail(@QueryMap params: Map<String, String>): ApiResponse<List<MemberDetail>>
+    suspend fun getMemberDetail(@QueryMap params: Map<String, String>): ApiResponse<MemberListResponse>
 
     @GET("Match/get_groups")
     suspend fun getGroups(@QueryMap params: Map<String, String>): ApiResponse<GroupsResponse>

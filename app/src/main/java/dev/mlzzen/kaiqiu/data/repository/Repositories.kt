@@ -316,9 +316,9 @@ class EventRepository(
         }
     }
 
-    suspend fun getMemberDetail(eventid: String): Result<List<MemberDetail>> {
+    suspend fun getMemberDetail(matchId: String, itemId: String): Result<List<MemberDetail>> {
         return Result.safeApiCall {
-            api.getMemberDetail(mapOf("eventid" to eventid)).getOrThrow()
+            api.getMemberDetail(mapOf("match_id" to matchId, "id" to itemId)).getOrThrow().list
         }
     }
 
