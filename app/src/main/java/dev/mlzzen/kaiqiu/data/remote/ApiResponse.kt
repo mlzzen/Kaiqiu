@@ -126,6 +126,18 @@ data class UserScores(
 )
 
 /**
+ * 用户积分变化历史
+ */
+data class ScoreHistory(
+    @SerializedName("postscore")
+    val postScore: String?,
+    @SerializedName("dateline")
+    val dateline: String?,
+    @SerializedName("title")
+    val title: String?
+)
+
+/**
  * 比赛记录
  */
 data class GameRecord(

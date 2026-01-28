@@ -17,13 +17,20 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import dev.mlzzen.kaiqiu.data.remote.AdvProfile
 import dev.mlzzen.kaiqiu.data.remote.GameRecord
 import dev.mlzzen.kaiqiu.data.remote.HttpClient
+import dev.mlzzen.kaiqiu.data.remote.ScoreHistory
 import dev.mlzzen.kaiqiu.data.repository.Result
 import dev.mlzzen.kaiqiu.data.repository.UserRepository
 import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
@@ -38,6 +45,7 @@ fun UserDetailScreen(
     val userRepository = remember { UserRepository() }
     var profile by remember { mutableStateOf<AdvProfile?>(null) }
     var gameRecords by remember { mutableStateOf<List<GameRecord>>(emptyList()) }
+    var scoreHistory by remember { mutableStateOf<List<ScoreHistory>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(uid) {
@@ -46,6 +54,15 @@ fun UserDetailScreen(
             is Result.Success -> profile = result.data
             is Result.Error -> profile = null
             is Result.Loading -> {}
+        }
+        // 加载积分历史
+        try {
+            val scoreResponse = HttpClient.api.getUserScores(uid)
+            if (scoreResponse.isSuccess) {
+                scoreHistory = scoreResponse.data ?: emptyList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
         // 加载近期战绩
         try {
@@ -149,16 +166,19 @@ fun UserDetailScreen(
                 }
 
                 // 积分折线图
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("积分趋势", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ScoreTrendChart(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp)
-                            .padding(horizontal = 16.dp)
-                    )
+                if (scoreHistory.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("积分趋势", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ScoreTrendChart(
+                            scoreHistory = scoreHistory,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
                 }
 
                 // 积分信息
@@ -311,47 +331,161 @@ private fun DetailRow(label: String, value: String) {
 }
 
 @Composable
-private fun ScoreTrendChart(modifier: Modifier = Modifier) {
+private fun ScoreTrendChart(scoreHistory: List<ScoreHistory>, modifier: Modifier = Modifier) {
     val primaryColor = Color(0xFF39B54A)
+    val axisColor = Color.Gray
+    val textMeasurer = rememberTextMeasurer()
+
     Card(modifier = modifier) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
+                .padding(16.dp)
         ) {
-            // 模拟积分趋势折线图
-            val scores = listOf(1200, 1250, 1230, 1300, 1280, 1350, 1400)
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val width = size.width
-                val height = size.height
-                val stepX = width / (scores.size - 1)
-                val minScore = scores.minOrNull() ?: 0
-                val maxScore = scores.maxOrNull() ?: 0
-                val scoreRange = (maxScore - minScore).coerceAtLeast(100)
-
-                val path = Path()
-                scores.forEachIndexed { index, score ->
-                    val x = index * stepX
-                    val y = height - ((score - minScore).toFloat() / scoreRange * height * 0.8f + height * 0.1f)
-                    if (index == 0) {
-                        path.moveTo(x, y)
-                    } else {
-                        path.lineTo(x, y)
-                    }
-                    // 绘制数据点
-                    drawCircle(
-                        color = primaryColor,
-                        radius = 6f,
-                        center = Offset(x, y)
-                    )
-                }
-
-                drawPath(
-                    path = path,
-                    color = primaryColor,
-                    style = Stroke(width = 3f)
+            if (scoreHistory.isEmpty()) {
+                Text(
+                    text = "暂无积分数据",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
                 )
+            } else {
+                // 解析真实数据
+                val scores = scoreHistory.mapNotNull { it.postScore?.toIntOrNull() }
+                val labels = scoreHistory.mapNotNull { it.dateline?.take(10) } // 取日期前10位
+
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val width = size.width
+                    val height = size.height
+                    val paddingLeft = 50f
+                    val paddingRight = 10f
+                    val paddingTop = 25f
+                    val paddingBottom = 35f
+
+                    val chartWidth = width - paddingLeft - paddingRight
+                    val chartHeight = height - paddingTop - paddingBottom
+
+                    val minScore = (scores.minOrNull() ?: 0) - 30f
+                    val maxScore = (scores.maxOrNull() ?: 0) + 30f
+                    val scoreRange = (maxScore - minScore).coerceAtLeast(100f)
+
+                    val stepX = if (scores.size > 1) chartWidth / (scores.size - 1) else 0f
+
+                    // 绘制Y轴
+                    drawLine(
+                        color = axisColor,
+                        start = Offset(paddingLeft, paddingTop),
+                        end = Offset(paddingLeft, height - paddingBottom),
+                        strokeWidth = 2f
+                    )
+
+                    // 绘制X轴
+                    drawLine(
+                        color = axisColor,
+                        start = Offset(paddingLeft, height - paddingBottom),
+                        end = Offset(width - paddingRight, height - paddingBottom),
+                        strokeWidth = 2f
+                    )
+
+                    // 绘制Y轴标签和网格线
+                    val ySteps = 4
+                    for (i in 0..ySteps) {
+                        val yValue = minScore + (scoreRange * i / ySteps)
+                        val y = height - paddingBottom - (chartHeight * i / ySteps)
+
+                        // Y轴标签
+                        val textResult = textMeasurer.measure(
+                            text = yValue.toInt().toString(),
+                            style = TextStyle(fontSize = 9.sp, color = axisColor)
+                        )
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            text = yValue.toInt().toString(),
+                            topLeft = Offset(paddingLeft - textResult.size.width - 4f, y - textResult.size.height / 2),
+                            style = TextStyle(fontSize = 9.sp, color = axisColor)
+                        )
+
+                        // 水平网格线
+                        if (i > 0 && i < ySteps) {
+                            drawLine(
+                                color = axisColor.copy(alpha = 0.2f),
+                                start = Offset(paddingLeft, y),
+                                end = Offset(width - paddingRight, y),
+                                strokeWidth = 1f
+                            )
+                        }
+                    }
+
+                    // 绘制X轴标签 (只显示部分避免重叠)
+                    if (scores.isNotEmpty()) {
+                        val labelStep = ((scores.size - 1) / 4).coerceAtLeast(1)
+                        scores.forEachIndexed { index, _ ->
+                            if (index % labelStep == 0 || index == scores.size - 1) {
+                                val x = paddingLeft + index * stepX
+                                val labelText = labels.getOrElse(index) { "${index + 1}" }
+                                val textResult = textMeasurer.measure(
+                                    text = labelText,
+                                    style = TextStyle(fontSize = 9.sp, color = axisColor)
+                                )
+                                drawText(
+                                    textMeasurer = textMeasurer,
+                                    text = labelText,
+                                    topLeft = Offset(x - textResult.size.width / 2, height - paddingBottom + 4f),
+                                    style = TextStyle(fontSize = 9.sp, color = axisColor)
+                                )
+                            }
+                        }
+                    }
+
+                    // 绘制折线
+                    if (scores.size > 1) {
+                        val path = Path()
+                        scores.forEachIndexed { index, score ->
+                            val x = paddingLeft + index * stepX
+                            val y = height - paddingBottom - ((score - minScore) / scoreRange * chartHeight)
+                            if (index == 0) {
+                                path.moveTo(x, y)
+                            } else {
+                                path.lineTo(x, y)
+                            }
+                        }
+                        drawPath(
+                            path = path,
+                            color = primaryColor,
+                            style = Stroke(width = 2.5f)
+                        )
+                    }
+
+                    // 绘制数据点和数值
+                    scores.forEachIndexed { index, score ->
+                        val x = paddingLeft + index * stepX
+                        val y = height - paddingBottom - ((score - minScore) / scoreRange * chartHeight)
+
+                        // 绘制数据点
+                        drawCircle(
+                            color = Color.White,
+                            radius = 7f,
+                            center = Offset(x, y)
+                        )
+                        drawCircle(
+                            color = primaryColor,
+                            radius = 5f,
+                            center = Offset(x, y)
+                        )
+
+                        // 绘制数值标签
+                        val valueText = score.toString()
+                        val valueResult = textMeasurer.measure(
+                            text = valueText,
+                            style = TextStyle(fontSize = 10.sp, color = primaryColor, fontWeight = FontWeight.Bold)
+                        )
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            text = valueText,
+                            topLeft = Offset(x - valueResult.size.width / 2, y - valueResult.size.height - 12f),
+                            style = TextStyle(fontSize = 10.sp, color = primaryColor, fontWeight = FontWeight.Bold)
+                        )
+                    }
+                }
             }
         }
     }

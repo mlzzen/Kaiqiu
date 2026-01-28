@@ -60,7 +60,7 @@ interface ApiService {
     suspend fun getUserTags(@QueryMap params: Map<String, String>): ApiResponse<List<String>>
 
     @GET("User/getUserScores")
-    suspend fun getUserScores(@Query("uid") uid: String): ApiResponse<UserScores>
+    suspend fun getUserScores(@Query("uid") uid: String): ApiResponse<List<ScoreHistory>>
 
     // ============ Top ============
 

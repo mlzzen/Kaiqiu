@@ -153,7 +153,7 @@ class UserRepository(
         }
     }
 
-    suspend fun getUserScores(uid: String): Result<UserScores> {
+    suspend fun getUserScores(uid: String): Result<List<ScoreHistory>> {
         return Result.safeApiCall {
             api.getUserScores(uid).getOrThrow()
         }
