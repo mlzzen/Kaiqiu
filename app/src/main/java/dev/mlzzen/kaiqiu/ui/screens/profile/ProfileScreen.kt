@@ -38,6 +38,8 @@ fun ProfileScreen(
     val isLoggedIn by userState.isLoggedIn.collectAsState()
     val cityName = userState.cityName
 
+    android.util.Log.d("ProfileDebug", "ProfileScreen: isLoggedIn=$isLoggedIn, userInfo=$userInfo")
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("我的") })

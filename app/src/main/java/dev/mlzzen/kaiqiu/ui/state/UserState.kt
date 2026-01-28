@@ -71,31 +71,42 @@ class UserState(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     init {
-        scope.launch {
-            // 先同步检查是否有已保存的 token
-            val savedToken = dataStore.getTokenSync()
-            if (!savedToken.isNullOrBlank()) {
-                _token.value = savedToken
-                _isLoggedIn.value = true
-                HttpClient.setAuthToken(savedToken)
-                // 同步检查是否有缓存的用户信息
-                val savedUserInfo = dataStore.getUserInfoSync()
-                if (!savedUserInfo.isNullOrBlank()) {
-                    try {
-                        _userInfo.value = gson.fromJson(savedUserInfo, UserInfo::class.java)
-                    } catch (e: Exception) {
-                        // 如果没有缓存的用户信息，尝试从 API 获取
-                        refreshUserInfo()
-                    }
-                } else {
-                    // 没有缓存用户信息，从 API 获取
+        // 同步初始化：恢复登录状态
+        val savedToken = dataStore.getTokenSync()
+        val savedUserInfo = dataStore.getUserInfoSync()
+
+        android.util.Log.d("ProfileDebug", "=== UserState init ===")
+        android.util.Log.d("ProfileDebug", "savedToken: $savedToken")
+        android.util.Log.d("ProfileDebug", "savedUserInfo: $savedUserInfo")
+
+        if (!savedToken.isNullOrBlank()) {
+            _token.value = savedToken
+            _isLoggedIn.value = true
+            HttpClient.setAuthToken(savedToken)
+            android.util.Log.d("ProfileDebug", "Restored logged in state: true")
+        } else {
+            android.util.Log.d("ProfileDebug", "No saved token, isLoggedIn: false")
+        }
+
+        if (!savedUserInfo.isNullOrBlank()) {
+            try {
+                _userInfo.value = gson.fromJson(savedUserInfo, UserInfo::class.java)
+                android.util.Log.d("ProfileDebug", "Restored userInfo: ${_userInfo.value}")
+            } catch (e: Exception) {
+                android.util.Log.d("ProfileDebug", "Parse userInfo failed: ${e.message}")
+                if (_isLoggedIn.value) {
                     refreshUserInfo()
                 }
             }
+        } else if (_isLoggedIn.value) {
+            android.util.Log.d("ProfileDebug", "No saved userInfo but logged in, refresh...")
+            refreshUserInfo()
         }
 
+        // 异步监听 DataStore 变化
         scope.launch {
             dataStore.tokenFlow.collect { token ->
+                android.util.Log.d("ProfileDebug", "tokenFlow changed: $token")
                 _token.value = token
                 _isLoggedIn.value = !token.isNullOrBlank()
                 token?.let {
@@ -106,6 +117,7 @@ class UserState(
 
         scope.launch {
             dataStore.userInfoFlow.collect { userInfoJson ->
+                android.util.Log.d("ProfileDebug", "userInfoFlow changed: $userInfoJson")
                 if (!userInfoJson.isNullOrBlank()) {
                     try {
                         _userInfo.value = gson.fromJson(userInfoJson, UserInfo::class.java)
@@ -163,18 +175,57 @@ class UserState(
             _isLoading.value = true
             _error.value = null
 
+            android.util.Log.d("ProfileDebug", "=== login() called ===")
+
             when (val result = userRepository.login(account, password)) {
                 is Result.Success -> {
                     val response = result.data
-                    _token.value = response.token
-                    _userInfo.value = response.userInfo
+                    val userInfoData = response.userinfo
+                    android.util.Log.d("ProfileDebug", "login success, token: ${userInfoData.token}")
+                    android.util.Log.d("ProfileDebug", "login userInfo: $userInfoData")
+
+                    // 先保存 token，再设置给 HttpClient
+                    dataStore.setToken(userInfoData.token)
+                    HttpClient.setAuthToken(userInfoData.token)
+
+                    _token.value = userInfoData.token
                     _isLoggedIn.value = true
-                    dataStore.setToken(response.token)
-                    dataStore.setUserInfo(gson.toJson(response.userInfo))
-                    HttpClient.setAuthToken(response.token)
+                    android.util.Log.d("ProfileDebug", "set isLoggedIn = true")
+
+                    // 构建一个临时的 UserInfo 用于显示
+                    val tempUserInfo = UserInfo(
+                        uid = userInfoData.id,
+                        image = null,
+                        username = userInfoData.username,
+                        nickname = null,
+                        realname = null,
+                        sex = null,
+                        city = null,
+                        score = null,
+                        credit = null,
+                        gold = null
+                    )
+                    _userInfo.value = tempUserInfo
+                    val json = gson.toJson(tempUserInfo)
+                    android.util.Log.d("ProfileDebug", "saving userInfo json: $json")
+                    dataStore.setUserInfo(json)
+
+                    // 登录成功后获取完整用户信息
+                    when (val userResult = userRepository.getUserInfo()) {
+                        is Result.Success -> {
+                            android.util.Log.d("ProfileDebug", "getUserInfo success: ${userResult.data}")
+                            _userInfo.value = userResult.data
+                            dataStore.setUserInfo(gson.toJson(userResult.data))
+                        }
+                        is Result.Error -> {
+                            android.util.Log.d("ProfileDebug", "getUserInfo failed, keep login userInfo")
+                        }
+                        is Result.Loading -> { }
+                    }
                 }
                 is Result.Error -> {
                     _error.value = result.exception.message ?: "登录失败"
+                    android.util.Log.d("ProfileDebug", "login failed: ${_error.value}")
                 }
                 is Result.Loading -> { }
             }

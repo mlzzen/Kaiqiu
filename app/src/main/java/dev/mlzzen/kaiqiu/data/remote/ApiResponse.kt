@@ -31,12 +31,23 @@ class ApiException(
 
 /**
  * 登录响应
+ * API 返回结构: {"code":1,"data":{"userinfo":{"token":"...","id":"...","username":"..."}}}
  */
 data class LoginResponse(
+    @SerializedName("userinfo")
+    val userinfo: LoginUserInfo
+)
+
+/**
+ * 登录返回的用户信息
+ */
+data class LoginUserInfo(
     @SerializedName("token")
     val token: String,
-    @SerializedName("userInfo")
-    val userInfo: UserInfo
+    @SerializedName("id")
+    val id: String,
+    @SerializedName("username")
+    val username: String?
 )
 
 /**
