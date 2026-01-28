@@ -78,24 +78,37 @@ data class UserInfo(
 
 /**
  * 高级用户信息
+ * API 返回结构参考源项目 user.vue
  */
 data class AdvProfile(
     @SerializedName("uid")
     val uid: String,
-    @SerializedName("avatar")
-    val avatar: String?,
-    @SerializedName("nickname")
-    val nickname: String?,
+    @SerializedName("realpic")
+    val realpic: String?,
+    @SerializedName("username")
+    val username: String?,
     @SerializedName("realname")
     val realname: String?,
+    @SerializedName("nickname")
+    val nickname: String?,
+    @SerializedName("score")
+    val score: String?,
+    @SerializedName("maxscore")
+    val maxscore: String?,
+    @SerializedName("maxScoreTheYear")
+    val maxScoreTheYear: String?,
+    @SerializedName("rank")
+    val rank: String?,
+    @SerializedName("scope")
+    val scope: String?,
     @SerializedName("sex")
     val sex: String?,
-    @SerializedName("city")
-    val city: String?,
-    @SerializedName("scores")
-    val scores: UserScores?,
-    @SerializedName("tags")
-    val tags: List<String>?
+    @SerializedName("age")
+    val age: String?,
+    @SerializedName("resideprovince")
+    val resideprovince: String?,
+    @SerializedName("description")
+    val description: String?
 )
 
 /**

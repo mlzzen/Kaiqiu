@@ -1,6 +1,5 @@
 package dev.mlzzen.kaiqiu.ui.screens.user
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -16,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import dev.mlzzen.kaiqiu.data.remote.AdvProfile
-import dev.mlzzen.kaiqiu.data.remote.UserScores
 import dev.mlzzen.kaiqiu.data.repository.Result
 import dev.mlzzen.kaiqiu.data.repository.UserRepository
 import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
@@ -28,41 +26,22 @@ fun UserDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEvents: () -> Unit
 ) {
-    android.util.Log.d("UserDetail", "UserDetailScreen init, uid=$uid")
     val userRepository = remember { UserRepository() }
     var profile by remember { mutableStateOf<AdvProfile?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(uid) {
-        android.util.Log.d("UserDetail", "LaunchedEffect triggered, uid=$uid")
         isLoading = true
-        android.util.Log.d("UserDetail", "=== getAdvProfile uid=$uid ===")
-        try {
-            val result = userRepository.getAdvProfile(uid)
-            android.util.Log.d("UserDetail", "getAdvProfile result type: ${result::class.simpleName}")
-            when (result) {
-                is Result.Success -> {
-                    profile = result.data
-                    android.util.Log.d("UserDetail", "getAdvProfile success: $profile")
-                    android.util.Log.d("UserDetail", "  nickname: ${profile?.nickname}")
-                    android.util.Log.d("UserDetail", "  avatar: ${profile?.avatar}")
-                    android.util.Log.d("UserDetail", "  scores: ${profile?.scores}")
-                }
-                is Result.Error -> {
-                    profile = null
-                    android.util.Log.d("UserDetail", "getAdvProfile error: ${result.exception}")
-                    result.exception.printStackTrace()
-                }
-                is Result.Loading -> {
-                    android.util.Log.d("UserDetail", "getAdvProfile loading")
-                }
+        when (val result = userRepository.getAdvProfile(uid)) {
+            is Result.Success -> {
+                profile = result.data
             }
-        } catch (e: Exception) {
-            android.util.Log.d("UserDetail", "getAdvProfile exception: ${e.message}")
-            e.printStackTrace()
+            is Result.Error -> {
+                profile = null
+            }
+            is Result.Loading -> {}
         }
         isLoading = false
-        android.util.Log.d("UserDetail", "isLoading=$isLoading, profile=$profile")
     }
 
     Scaffold(
@@ -104,7 +83,7 @@ fun UserDetailScreen(
                                 .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            val avatarUrl = profile?.avatar
+                            val avatarUrl = profile?.realpic
                             if (!avatarUrl.isNullOrEmpty()) {
                                 AsyncImage(
                                     model = if (!avatarUrl.startsWith("http")) "https:$avatarUrl" else avatarUrl,
@@ -131,15 +110,14 @@ fun UserDetailScreen(
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
-                                val displayName = profile?.nickname ?: profile?.realname ?: "用户"
+                                val displayName = profile?.realname ?: profile?.nickname
+                                    ?: profile?.username ?: "用户"
                                 Text(displayName, style = MaterialTheme.typography.titleMedium)
-                                profile?.scores?.let { scores ->
-                                    Text(
-                                        "胜: ${scores.wins} | 负: ${scores.losses}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = TextSecondary
-                                    )
-                                }
+                                Text(
+                                    "排名: ${profile?.rank ?: "-"} ${profile?.scope ?: ""}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = TextSecondary
+                                )
                             }
                         }
                     }
@@ -173,7 +151,7 @@ fun UserDetailScreen(
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "比赛数据",
+                        "积分信息",
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
@@ -181,55 +159,81 @@ fun UserDetailScreen(
                 }
 
                 item {
-                    profile?.scores?.let { scores ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            StatItem("总场次", scores.totalGames.toString())
-                            StatItem("胜场", scores.wins.toString())
-                            StatItem("负场", scores.losses.toString())
-                            StatItem("胜率", scores.winRate ?: "0%")
-                        }
-                    } ?: run {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            StatItem("总场次", "0")
-                            StatItem("胜场", "0")
-                            StatItem("负场", "0")
-                            StatItem("胜率", "0%")
-                        }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem("当前积分", profile?.score ?: "0")
+                        StatItem("年度积分", profile?.maxScoreTheYear ?: "0")
+                        StatItem("最高积分", profile?.maxscore ?: "0")
                     }
                 }
 
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        "标签",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+                profile?.let { p ->
+                    if (!p.resideprovince.isNullOrBlank() || !p.sex.isNullOrBlank() || !p.age.isNullOrBlank()) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                "基本信息",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
 
-                item {
-                    profile?.tags?.let { tags ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            tags.take(6).forEach { tag ->
-                                AssistChip(
-                                    onClick = { },
-                                    label = { Text(tag) }
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            "性别: ${p.sex ?: "-"}",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Text(
+                                            "年龄: ${p.age ?: "-"}",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        "所在: ${p.resideprovince ?: "-"}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (!p.description.isNullOrBlank()) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                "个人简介",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                Text(
+                                    text = p.description,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(16.dp)
                                 )
                             }
                         }
