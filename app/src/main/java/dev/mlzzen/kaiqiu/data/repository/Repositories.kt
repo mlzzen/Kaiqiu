@@ -42,7 +42,8 @@ class UserRepository(
 
     suspend fun getMatchListHisByPage(page: Int): Result<List<EventHistory>> {
         return Result.safeApiCall {
-            api.getMatchListHisByPage(mapOf("page" to page.toString(), "index" to "0")).getOrThrow()
+            val response = api.getMatchListHisByPage(mapOf("page" to page.toString(), "index" to "0"))
+            if (response.isSuccess) response.data ?: emptyList<EventHistory>() else emptyList()
         }
     }
 
