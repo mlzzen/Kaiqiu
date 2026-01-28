@@ -484,6 +484,30 @@ data class GroupMatch(
 )
 
 /**
+ * 赛事详情响应
+ */
+data class EventDetailResponse(
+    @SerializedName("items")
+    val items: List<EventItemInfo>,
+    @SerializedName("detail")
+    val detail: EventDetail
+)
+
+/**
+ * 赛项信息
+ */
+data class EventItemInfo(
+    @SerializedName("id")
+    val id: String,
+    @SerializedName("name")
+    val name: String?,
+    @SerializedName("match_type")
+    val matchType: String?,
+    @SerializedName("qualNum")
+    val qualNum: Int?
+)
+
+/**
  * 赛事详情
  */
 data class EventDetail(
@@ -491,16 +515,26 @@ data class EventDetail(
     val eventid: String,
     @SerializedName("title")
     val title: String?,
-    @SerializedName("startTime")
-    val startTime: String?,
-    @SerializedName("endTime")
-    val endTime: String?,
-    @SerializedName("arena")
-    val arena: String?,
-    @SerializedName("img")
-    val img: String?,
+    @SerializedName("starttime")
+    val starttime: String?,
+    @SerializedName("endtime")
+    val endtime: String?,
+    @SerializedName("arena_name")
+    val arenaName: String?,
+    @SerializedName("poster")
+    val poster: String?,
     @SerializedName("status")
-    val status: String?
+    val status: String?,
+    @SerializedName("contact")
+    val contact: String?,
+    @SerializedName("mobile")
+    val mobile: String?,
+    @SerializedName("location")
+    val location: String?,
+    @SerializedName("lat")
+    val lat: String?,
+    @SerializedName("lng")
+    val lng: String?
 )
 
 /**

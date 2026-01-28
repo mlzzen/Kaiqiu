@@ -6,7 +6,12 @@
       "Bash(powershell -Command \"cd ''D:\\\\workspace\\\\Kaiqiu''; .\\\\gradlew.bat assembleDebug\")",
       "Bash(powershell:*)",
       "Bash(cd:*)",
-      "Bash(gradlew.bat assembleDebug)"
+      "Bash(gradlew.bat assembleDebug)",
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(dir:*)",
+      "Bash(adb logcat:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

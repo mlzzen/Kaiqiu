@@ -107,7 +107,7 @@ interface ApiService {
     // ============ Event ============
 
     @GET("enter/detail")
-    suspend fun getEventDetaiByIdAndLocation(@QueryMap params: Map<String, String>): ApiResponse<EventDetail>
+    suspend fun getEventDetaiByIdAndLocation(@QueryMap params: Map<String, String>): ApiResponse<EventDetailResponse>
 
     @GET("enter/get_member_detail")
     suspend fun getMemberDetail(@QueryMap params: Map<String, String>): ApiResponse<MemberListResponse>

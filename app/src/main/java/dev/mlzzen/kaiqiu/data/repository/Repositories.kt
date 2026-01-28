@@ -310,9 +310,9 @@ class MatchRepository(
 class EventRepository(
     private val api: ApiService = HttpClient.api
 ) {
-    suspend fun getEventDetail(eventid: String): Result<EventDetail> {
+    suspend fun getEventDetail(eventid: String): Result<EventDetailResponse> {
         return Result.safeApiCall {
-            api.getEventDetaiByIdAndLocation(mapOf("eventid" to eventid)).getOrThrow()
+            api.getEventDetaiByIdAndLocation(mapOf("id" to eventid)).getOrThrow()
         }
     }
 
