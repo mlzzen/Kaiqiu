@@ -23,6 +23,7 @@ import dev.mlzzen.kaiqiu.ui.screens.search.Top100Screen
 import dev.mlzzen.kaiqiu.ui.screens.search.TopSearchScreen
 import dev.mlzzen.kaiqiu.ui.screens.search.RankScreen
 import dev.mlzzen.kaiqiu.ui.screens.search.GymScreen
+import dev.mlzzen.kaiqiu.ui.screens.user.FavoritesScreen
 import dev.mlzzen.kaiqiu.ui.screens.user.FollowedPlayersScreen
 import dev.mlzzen.kaiqiu.ui.screens.user.UserDetailScreen
 import dev.mlzzen.kaiqiu.ui.screens.user.UserEventsScreen
@@ -90,6 +91,14 @@ fun KaiqiuNavHost(
                 onNavigateToEvent = { eventid ->
                     navController.navigate(Screen.EventDetail.createRoute(eventid))
                 },
+                onNavigateToUser = { uid ->
+                    navController.navigate(Screen.UserDetail.createRoute(uid))
+                }
+            )
+        }
+
+        composable(Screen.Favorites.route) {
+            FavoritesScreen(
                 onNavigateToUser = { uid ->
                     navController.navigate(Screen.UserDetail.createRoute(uid))
                 }
