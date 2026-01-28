@@ -44,18 +44,27 @@ fun UserEventsScreen(
     val scope = remember { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
 
     fun loadData(reset: Boolean = false) {
+        android.util.Log.d("UserEvents", "=== loadData reset=$reset ===")
+        android.util.Log.d("UserEvents", "uid=$uid, page=$page, isLoadingMore=$isLoadingMore, hasMore=$hasMore")
+
         if (reset) {
             page = 1
             events = emptyList()
             hasMore = true
         }
-        if (isLoadingMore || !hasMore) return
+        if (isLoadingMore || !hasMore) {
+            android.util.Log.d("UserEvents", "skip loadData: isLoadingMore=$isLoadingMore, hasMore=$hasMore")
+            return
+        }
 
         isLoadingMore = true
         scope.launch {
+            android.util.Log.d("UserEvents", "calling getMatchListHisByPage($page)")
             when (val result = userRepository.getMatchListHisByPage(page)) {
                 is Result.Success -> {
                     val newEvents = result.data
+                    android.util.Log.d("UserEvents", "getMatchListHisByPage success: ${newEvents.size} events")
+                    android.util.Log.d("UserEvents", "events: $newEvents")
                     if (newEvents.isEmpty()) {
                         hasMore = false
                     } else {
@@ -64,16 +73,19 @@ fun UserEventsScreen(
                     }
                 }
                 is Result.Error -> {
+                    android.util.Log.d("UserEvents", "getMatchListHisByPage error: ${result.exception}")
                     hasMore = false
                 }
                 is Result.Loading -> {}
             }
             isLoading = false
             isLoadingMore = false
+            android.util.Log.d("UserEvents", "loadData complete: events.size=${events.size}, hasMore=$hasMore")
         }
     }
 
     LaunchedEffect(uid) {
+        android.util.Log.d("UserEvents", "LaunchedEffect triggered, uid=$uid")
         loadData(true)
     }
 
