@@ -301,6 +301,7 @@ private fun ProfileMenuGroup(title: String, items: List<MenuItem>) {
 @Composable
 private fun SignInButton() {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
     var signedToday by remember { mutableStateOf(false) }
 
@@ -330,9 +331,17 @@ private fun SignInButton() {
                         val response = HttpClient.api.getDaySign()
                         if (response.isSuccess) {
                             signedToday = true
+                            Toast.makeText(context, "签到成功", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                response.msg ?: "签到失败",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
+                        Toast.makeText(context, "签到失败", Toast.LENGTH_SHORT).show()
                     } finally {
                         isLoading = false
                     }
