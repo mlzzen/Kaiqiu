@@ -116,25 +116,15 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             if (isLoggedIn) {
-                                val nickname = userInfo?.nickname
-                                val realname = userInfo?.realname
-                                if (!nickname.isNullOrBlank()) {
+                                Text(
+                                    text = userInfo?.nickname ?: userInfo?.username ?: "用户",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                if (!userInfo?.realname.isNullOrBlank()) {
                                     Text(
-                                        text = nickname,
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                }
-                                if (!realname.isNullOrBlank()) {
-                                    Text(
-                                        text = realname,
+                                        text = userInfo?.realname ?: "",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                if (nickname.isNullOrBlank() && realname.isNullOrBlank()) {
-                                    Text(
-                                        text = userInfo?.username ?: "用户",
-                                        style = MaterialTheme.typography.titleMedium
                                     )
                                 }
                                 Text(

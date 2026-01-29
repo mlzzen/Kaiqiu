@@ -233,22 +233,15 @@ fun UserDetailScreen(
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
-                                val nickname = profile?.nickname
-                                val realname = profile?.realname
-                                if (!nickname.isNullOrBlank()) {
-                                    Text(nickname, style = MaterialTheme.typography.titleMedium)
-                                }
-                                if (!realname.isNullOrBlank()) {
+                                Text(
+                                    text = profile?.nickname ?: profile?.username ?: "用户",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                if (!profile?.realname.isNullOrBlank()) {
                                     Text(
-                                        text = realname,
+                                        text = profile?.realname ?: "",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = TextSecondary
-                                    )
-                                }
-                                if (nickname.isNullOrBlank() && realname.isNullOrBlank()) {
-                                    Text(
-                                        text = profile?.username ?: "用户",
-                                        style = MaterialTheme.typography.titleMedium
                                     )
                                 }
                                 Text(

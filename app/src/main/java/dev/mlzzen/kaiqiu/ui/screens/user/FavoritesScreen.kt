@@ -157,11 +157,25 @@ private fun FavoritePlayerRow(
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            val displayName = user.realname ?: user.nickname ?: "-"
-            Text(
-                text = displayName,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            if (!user.nickname.isNullOrBlank()) {
+                Text(
+                    text = user.nickname,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            if (!user.realname.isNullOrBlank()) {
+                Text(
+                    text = user.realname,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+            }
+            if (user.nickname.isNullOrBlank() && user.realname.isNullOrBlank()) {
+                Text(
+                    text = "-",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             Text(
                 text = "ID: ${user.uid}",
                 style = MaterialTheme.typography.bodySmall,
