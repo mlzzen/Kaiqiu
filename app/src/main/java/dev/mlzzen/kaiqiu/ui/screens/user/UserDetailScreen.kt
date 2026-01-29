@@ -262,48 +262,6 @@ fun UserDetailScreen(
                     }
                 }
 
-                // 战绩统计
-                profile?.let { p ->
-                    val winNum = p.win ?: "0"
-                    val loseNum = p.lose ?: "0"
-                    val totalNum = p.total ?: "0"
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(winNum, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFF39B54A))
-                                    Text("胜", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                }
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(loseNum, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFFE6326E))
-                                    Text("负", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                }
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(totalNum, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                                    Text("总场", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                }
-                                // 击败的最高分选手
-                                p.beat?.takeIf { it.isNotBlank() }?.let { beat ->
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(beat, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                        Text("最高分", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // 操作按钮（仅当前用户可见）
                 val isCurrentUser = uid == currentUserUid
                 if (isCurrentUser) {
@@ -319,22 +277,6 @@ fun UserDetailScreen(
                             ActionButton(icon = Icons.Default.Favorite, label = "关注", onClick = { })
                             ActionButton(icon = Icons.Default.Person, label = "粉丝", onClick = { })
                         }
-                    }
-                }
-
-                // 积分折线图
-                if (scoreHistory.isNotEmpty()) {
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("积分趋势", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        ScoreTrendChart(
-                            scoreHistory = scoreHistory,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                                .padding(horizontal = 16.dp)
-                        )
                     }
                 }
 
@@ -358,11 +300,62 @@ fun UserDetailScreen(
                     }
                 }
 
-                // 专业背景和装备信息
+                // 积分折线图
+                if (scoreHistory.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("积分趋势", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ScoreTrendChart(
+                            scoreHistory = scoreHistory,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
+                }
+
+                // 战绩统计
+                profile?.let { p ->
+                    val winNum = p.win ?: "0"
+                    val loseNum = p.lose ?: "0"
+                    val totalNum = p.total ?: "0"
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(winNum, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFF39B54A))
+                                    Text("胜", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(loseNum, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = Color(0xFFE6326E))
+                                    Text("负", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(totalNum, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                                    Text("总场", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 装备信息
                 profile?.let { p ->
                     val hasEquipment = !p.bg.isNullOrBlank() || !p.qiupai.isNullOrBlank() ||
                             !p.zhengshou.isNullOrBlank() || !p.fanshou.isNullOrBlank()
-                    if (hasEquipment || !p.description.isNullOrBlank()) {
+                    if (hasEquipment) {
                         item {
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("装备信息", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
@@ -376,8 +369,8 @@ fun UserDetailScreen(
                                     .padding(horizontal = 16.dp)
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    if (!p.description.isNullOrBlank()) {
-                                        DetailRow("专业背景", p.description)
+                                    if (!p.bg.isNullOrBlank()) {
+                                        DetailRow("专业背景", p.bg)
                                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                                     }
                                     if (!p.qiupai.isNullOrBlank() || !p.qiupaitype.isNullOrBlank()) {
@@ -392,6 +385,31 @@ fun UserDetailScreen(
                                         DetailRow("反手套胶", "${p.fanshou ?: ""} ${p.fanshoutype ?: ""}".trim())
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+
+                // 个人简介
+                profile?.let { p ->
+                    if (!p.description.isNullOrBlank()) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("个人简介", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                Text(
+                                    text = p.description,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(16.dp)
+                                )
                             }
                         }
                     }
@@ -651,9 +669,11 @@ private fun StatItem(label: String, value: String) {
 private fun DetailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+        Spacer(modifier = Modifier.width(12.dp))
         Text(value, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
     }
 }

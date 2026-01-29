@@ -108,9 +108,9 @@ data class AdvProfile(
     @SerializedName("resideprovince")
     val resideprovince: String?,
     @SerializedName("description")
-    val description: String?,
+    val description: String?,  // 专业背景
     @SerializedName("bg")
-    val bg: String?,           // 专业背景
+    val bg: String?,
     @SerializedName("qiupai")
     val qiupai: String?,       // 底板品牌
     @SerializedName("qiupaitype")
