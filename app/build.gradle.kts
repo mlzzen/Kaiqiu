@@ -36,6 +36,12 @@ android {
     }
 
     signingConfigs {
+        create("debug") {
+            keyAlias = "kaiqiu"
+            keyPassword = "kaiqiu123"
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "kaiqiu123"
+        }
         if (enableReleaseSigning) {
             create("release") {
                 keyAlias = keyAliasValue
@@ -50,6 +56,7 @@ android {
         debug {
             isDebuggable = true
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
         }
         release {
             isMinifyEnabled = true
