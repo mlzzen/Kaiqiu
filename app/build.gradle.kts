@@ -6,17 +6,17 @@ plugins {
 
 val keystorePath = System.getenv("KEYSTORE_PATH") as String?
     ?: project.findProperty("KEYSTORE_PATH") as String?
-val keystorePassword = System.getenv("KEYSTORE_PASSWORD") as String?
+val keystorePasswordValue = System.getenv("KEYSTORE_PASSWORD") as String?
     ?: project.findProperty("KEYSTORE_PASSWORD") as String?
-val keyAlias = System.getenv("KEY_ALIAS") as String?
+val keyAliasValue = System.getenv("KEY_ALIAS") as String?
     ?: project.findProperty("KEY_ALIAS") as String?
-val keyPassword = System.getenv("KEY_PASSWORD") as String?
+val keyPasswordValue = System.getenv("KEY_PASSWORD") as String?
     ?: project.findProperty("KEY_PASSWORD") as String?
 val enableReleaseSigning = listOf(
     keystorePath,
-    keystorePassword,
-    keyAlias,
-    keyPassword
+    keystorePasswordValue,
+    keyAliasValue,
+    keyPasswordValue
 ).all { !it.isNullOrBlank() }
 
 android {
@@ -38,10 +38,10 @@ android {
     signingConfigs {
         if (enableReleaseSigning) {
             create("release") {
-                keyAlias = keyAlias
-                keyPassword = keyPassword
+                keyAlias = keyAliasValue
+                keyPassword = keyPasswordValue
                 storeFile = rootProject.file(keystorePath!!)
-                storePassword = keystorePassword
+                storePassword = keystorePasswordValue
             }
         }
     }
