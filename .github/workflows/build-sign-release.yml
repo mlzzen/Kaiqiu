@@ -23,6 +23,7 @@ jobs:
 
     outputs:
       version-name: ${{ steps.version.outputs.version-name }}
+      version-code: ${{ steps.version.outputs.version-code }}
       is-release: ${{ steps.version.outputs.is-release }}
 
     steps:
@@ -110,22 +111,12 @@ jobs:
             echo "警告: 未配置签名密钥，release 构建将跳过签名"
           fi
 
-      # 7. 构建 Debug APK
-      - name: Build Debug APK
-        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
-
-      # 8. 构建 Release APK (如果配置了签名)
+      # 7. 构建 Release APK (如果配置了签名)
       - name: Build Release APK
         if: steps.version.outputs.is-release == 'true'
         run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
 
-      # 9. 上传构建产物
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-apk
-          path: app/build/outputs/apk/debug/
-
+      # 8. 上传构建产物
       - name: Upload Release APK
         if: steps.version.outputs.is-release == 'true'
         uses: actions/upload-artifact@v4
@@ -147,12 +138,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Debug APK
-        uses: actions/download-artifact@v4
-        with:
-          name: debug-apk
-          path: debug/
-
       - name: Download Release APK
         uses: actions/download-artifact@v4
         with:
@@ -165,34 +150,19 @@ jobs:
           name: changelog
           path: .
 
+      - name: Rename APK
+        run: |
+          VERSION_NAME="${{ needs.build.outputs.version-name }}"
+          mv release/app-release.apk release/kaiqiu-${VERSION_NAME}.apk
+          echo "重命名为: kaiqiu-${VERSION_NAME}.apk"
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release/app-release.apk
-            debug/app-debug.apk
+            release/kaiqiu-*.apk
           body_path: CHANGELOG.txt
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  upload-artifacts:
-    name: Upload Artifacts (Development)
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.outputs.is-release != 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download Debug APK
-        uses: actions/download-artifact@v4
-        with:
-          name: debug-apk
-          path: debug/
-
-      - name: Upload to Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.APP_NAME }}-debug-${{ github.sha }}
-          path: debug/
-          retention-days: 7
