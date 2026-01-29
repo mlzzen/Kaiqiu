@@ -262,24 +262,6 @@ fun UserDetailScreen(
                     }
                 }
 
-                // 操作按钮（仅当前用户可见）
-                val isCurrentUser = uid == currentUserUid
-                if (isCurrentUser) {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            ActionButton(icon = Icons.Default.Star, label = "参赛记录", onClick = onNavigateToEvents)
-                            ActionButton(icon = Icons.Default.Favorite, label = "关注", onClick = { })
-                            ActionButton(icon = Icons.Default.Person, label = "粉丝", onClick = { })
-                        }
-                    }
-                }
-
                 // 积分信息
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
