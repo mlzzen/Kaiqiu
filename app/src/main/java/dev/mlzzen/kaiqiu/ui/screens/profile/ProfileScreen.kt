@@ -115,16 +115,44 @@ fun ProfileScreen(
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (isLoggedIn) userInfo?.username ?: userInfo?.nickname
-                                    ?: userInfo?.realname ?: "用户" else "未登录",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = if (isLoggedIn) cityName else "点击登录",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            if (isLoggedIn) {
+                                val nickname = userInfo?.nickname
+                                val realname = userInfo?.realname
+                                if (!nickname.isNullOrBlank()) {
+                                    Text(
+                                        text = nickname,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
+                                if (!realname.isNullOrBlank()) {
+                                    Text(
+                                        text = realname,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (nickname.isNullOrBlank() && realname.isNullOrBlank()) {
+                                    Text(
+                                        text = userInfo?.username ?: "用户",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
+                                Text(
+                                    text = cityName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                Text(
+                                    text = "未登录",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = "点击登录",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                         if (isLoggedIn) {
                             Icon(

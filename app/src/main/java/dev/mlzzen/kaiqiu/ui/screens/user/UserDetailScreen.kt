@@ -233,8 +233,24 @@ fun UserDetailScreen(
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
-                                val displayName = profile?.realname ?: profile?.nickname ?: profile?.username ?: "用户"
-                                Text(displayName, style = MaterialTheme.typography.titleMedium)
+                                val nickname = profile?.nickname
+                                val realname = profile?.realname
+                                if (!nickname.isNullOrBlank()) {
+                                    Text(nickname, style = MaterialTheme.typography.titleMedium)
+                                }
+                                if (!realname.isNullOrBlank()) {
+                                    Text(
+                                        text = realname,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextSecondary
+                                    )
+                                }
+                                if (nickname.isNullOrBlank() && realname.isNullOrBlank()) {
+                                    Text(
+                                        text = profile?.username ?: "用户",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
                                 Text(
                                     "排名: ${profile?.rank ?: "-"} ${profile?.scope ?: ""}",
                                     style = MaterialTheme.typography.bodyMedium,
@@ -252,7 +268,7 @@ fun UserDetailScreen(
                                 val infoText = listOf(ageText, sexText, cityText).filter { it.isNotBlank() }.joinToString(" | ")
                                 if (infoText.isNotBlank()) {
                                     Text(
-                                        infoText,
+                                        text = infoText,
                                         style = MaterialTheme.typography.bodySmall,
                                         color = TextSecondary
                                     )
