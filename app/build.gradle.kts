@@ -1,14 +1,23 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
 
-val keystorePropertiesFile = rootProject.file("app/keystore.properties")
-val keystoreProperties = Properties()
-keystoreProperties.load(keystorePropertiesFile.inputStream())
+val keystorePath = System.getenv("KEYSTORE_PATH") as String?
+    ?: project.findProperty("KEYSTORE_PATH") as String?
+val keystorePassword = System.getenv("KEYSTORE_PASSWORD") as String?
+    ?: project.findProperty("KEYSTORE_PASSWORD") as String?
+val keyAlias = System.getenv("KEY_ALIAS") as String?
+    ?: project.findProperty("KEY_ALIAS") as String?
+val keyPassword = System.getenv("KEY_PASSWORD") as String?
+    ?: project.findProperty("KEY_PASSWORD") as String?
+val enableReleaseSigning = listOf(
+    keystorePath,
+    keystorePassword,
+    keyAlias,
+    keyPassword
+).all { !it.isNullOrBlank() }
 
 android {
     namespace = "dev.mlzzen.kaiqiu"
@@ -27,11 +36,13 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
+        if (enableReleaseSigning) {
+            create("release") {
+                keyAlias = keyAlias
+                keyPassword = keyPassword
+                storeFile = rootProject.file(keystorePath!!)
+                storePassword = keystorePassword
+            }
         }
     }
 
@@ -47,8 +58,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // 启用签名
-            signingConfig = signingConfigs.getByName("release")
+            if (enableReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                project.logger.lifecycle("Release signing disabled: missing KEYSTORE_* env or Gradle properties.")
+            }
         }
     }
     compileOptions {
