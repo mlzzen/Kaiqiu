@@ -266,7 +266,7 @@ fun GymScreen(
                                     .padding(16.dp)
                             ) {
                                 Text(
-                                    text = "近期赛事",
+                                    text = "近期比赛",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFF89703)

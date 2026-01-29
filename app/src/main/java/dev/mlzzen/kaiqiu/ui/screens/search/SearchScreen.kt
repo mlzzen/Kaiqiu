@@ -26,7 +26,7 @@ fun SearchScreen(
     var searchText by remember { mutableStateOf("") }
     var selectedTab by remember { mutableIntStateOf(0) }
     var showFilter by remember { mutableStateOf(false) }
-    val tabs = listOf("赛事", "球馆", "球友")
+    val tabs = listOf("比赛", "球馆", "球友")
 
     Scaffold(
         topBar = {
@@ -202,9 +202,9 @@ private fun SearchFilterPanel(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 赛事标签
+        // 比赛标签
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("赛事标签", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(80.dp))
+            Text("比赛标签", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(80.dp))
             LazyRow(
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

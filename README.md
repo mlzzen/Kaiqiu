@@ -11,12 +11,12 @@
 ## 当前功能
 
 - 登录与退出
-- 首页近期赛事列表（基于定位/城市选择）
-- 赛事列表、赛事详情、参赛名单
+- 首页近期比赛列表（基于定位/城市选择）
+- 比赛列表、比赛详情、参赛名单
 - 比赛详情、记分、小组记分
 - 用户详情与参赛记录
 - 关注/收藏列表查看与取消关注
-- 搜索入口（赛事/球馆/球友）与筛选面板
+- 搜索入口（比赛/球馆/球友）与筛选面板
 - 排行榜入口、Top100、排行
 - 球馆详情页
 - 个人中心：积分/金币/信用、每日签到、城市选择、关于
@@ -25,7 +25,7 @@
 
 非常感谢 [kaiqiu-app-uni](https://github.com/xiaojia001/kaiqiu-app-uni) 项目提供的思路和参考，本项目的很多设计、API 对接、页面逻辑都参考了该开源项目。
 
-原项目是一个优秀的乒乓球约球赛事平台，功能丰富，架构清晰。在此特别感谢作者的开源分享。
+原项目是一个优秀的乒乓球约球比赛平台，功能丰富，架构清晰。在此特别感谢作者的开源分享。
 
 ## 技术栈
 
@@ -61,7 +61,7 @@
 | POST | `user/get_userinfo` | 获取用户信息 |
 | POST | `user/adv_profile` | 获取高级用户资料 (Query: uid) |
 | GET | `User/getGames` | 获取用户比赛记录 (Query: uid, page) |
-| POST | `center/events` | 获取用户赛事历史 |
+| POST | `center/events` | 获取用户比赛历史 |
 | GET | `User/followee` | 关注用户 (Query: uid) |
 | GET | `User/cancelFollowee` | 取消关注 (Query: uid) |
 | GET | `User/getUserFolloweesList` | 获取关注列表 |
@@ -85,15 +85,15 @@
 |------|------|------|
 | POST | `arena/lists` | 获取球馆列表 |
 | GET | `arena/detail` | 获取球馆详情 |
-| GET | `arena/match_list` | 获取球馆赛事列表 |
+| GET | `arena/match_list` | 获取球馆比赛列表 |
 
 ### Match
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `match/lists` | 获取赛事列表 |
+| POST | `match/lists` | 获取比赛列表 |
 | GET | `Match/getGameidByUIDAndGroupID` | 根据分组获取比赛 ID |
-| GET | `Match/getGameidByUIDAndMatchItem` | 根据赛事项目获取比赛 ID |
+| GET | `Match/getGameidByUIDAndMatchItem` | 根据比赛项目获取比赛 ID |
 | POST | `Match/getGameDetail` | 获取比赛详情 |
 | GET | `Arrange/knockout` | 获取淘汰赛安排 |
 | GET | `Match/update_tt_score` | 更新乒乓球比赛成绩 |
@@ -104,9 +104,9 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `enter/detail` | 获取赛事详情 |
+| GET | `enter/detail` | 获取比赛详情 |
 | GET | `enter/get_member_detail` | 获取参赛成员详情 |
-| GET | `Match/get_groups` | 获取赛事分组 |
+| GET | `Match/get_groups` | 获取比赛分组 |
 | GET | `Match/get_all_honors` | 获取所有荣誉 |
 | GET | `Match/getResult` | 获取比赛结果 |
 | GET | `Match/getScoreChange2` | 获取积分变化 (Query: eventid) |

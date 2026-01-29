@@ -202,7 +202,7 @@ private fun EventHistoryItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.Top
         ) {
-            // 赛事海报
+            // 比赛海报
             if (!event.poster.isNullOrEmpty()) {
                 AsyncImage(
                     model = if (!event.poster.startsWith("http")) "https:${event.poster}" else event.poster,
@@ -232,7 +232,7 @@ private fun EventHistoryItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = event.title ?: "未知赛事",
+                    text = event.title ?: "未知比赛",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     maxLines = 2,

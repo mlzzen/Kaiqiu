@@ -298,7 +298,7 @@ private fun EventCard(
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            // 赛事海报
+            // 比赛海报
             Box {
                 AsyncImage(
                     model = event.poster?.let { if (!it.startsWith("http")) "https:$it" else it },
@@ -326,7 +326,7 @@ private fun EventCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // 赛事信息
+            // 比赛信息
             Column(
                 modifier = Modifier
                     .weight(1f)

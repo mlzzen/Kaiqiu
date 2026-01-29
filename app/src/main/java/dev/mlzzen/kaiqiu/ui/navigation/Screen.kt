@@ -31,8 +31,8 @@ sealed class Screen(
     data object FollowedPlayers : Screen("followed_players", "关注列表")
 
     // Event
-    data object EventList : Screen("events", "赛事列表")
-    data object EventDetail : Screen("event/{eventid}", "赛事详情") {
+    data object EventList : Screen("events", "比赛列表")
+    data object EventDetail : Screen("event/{eventid}", "比赛详情") {
         fun createRoute(eventid: String) = "event/$eventid"
     }
     data object EventMembers : Screen("event/{eventid}/members/{matchId}/{itemId}", "参赛名单") {

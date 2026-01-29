@@ -344,7 +344,7 @@ class MatchRepository(
 }
 
 /**
- * 赛事相关 API 仓库
+ * 比赛相关 API 仓库
  */
 class EventRepository(
     private val api: ApiService = HttpClient.api

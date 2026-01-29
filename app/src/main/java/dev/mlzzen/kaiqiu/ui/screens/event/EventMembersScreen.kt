@@ -61,7 +61,7 @@ fun EventMembersScreen(
 
     LaunchedEffect(Unit) {
         baseInfo = mapOf(
-            "event_name" to "赛事",
+            "event_name" to "比赛",
             "match_name" to "子项目"
         )
         loadData()
@@ -94,7 +94,7 @@ fun EventMembersScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // 赛事信息头
+                // 比赛信息头
                 item {
                     Column(
                         modifier = Modifier
@@ -102,7 +102,7 @@ fun EventMembersScreen(
                             .background(Color(0xFFFFFEFF))
                     ) {
                         Text(
-                            text = "赛事",
+                            text = "比赛",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFF39B54A),
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

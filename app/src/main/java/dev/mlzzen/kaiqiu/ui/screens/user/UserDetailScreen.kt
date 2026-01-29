@@ -2,12 +2,15 @@ package dev.mlzzen.kaiqiu.ui.screens.user
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,11 +20,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +42,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -50,19 +57,27 @@ import dev.mlzzen.kaiqiu.data.repository.UserRepository
 import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun UserDetailScreen(
     uid: String,
     onNavigateBack: () -> Unit,
-    onNavigateToEvents: () -> Unit
+    onNavigateToEvents: () -> Unit,
+    onNavigateToUser: (String) -> Unit,
+    onNavigateToEvent: (String) -> Unit
 ) {
     val userRepository = remember { UserRepository() }
     var profile by remember { mutableStateOf<AdvProfile?>(null) }
     var gameRecords by remember { mutableStateOf<List<GameRecord>>(emptyList()) }
     var scoreHistory by remember { mutableStateOf<List<ScoreHistory>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var isLoadingMore by remember { mutableStateOf(false) }
+    var hasMore by remember { mutableStateOf(true) }
+    var nextPage by remember { mutableIntStateOf(1) }
+    val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(uid) {
         isLoading = true
@@ -96,16 +111,58 @@ fun UserDetailScreen(
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        // 加载近期战绩
-        try {
-            val response = HttpClient.api.getPageGamesByUid(uid, 1)
-            if (response.isSuccess) {
-                gameRecords = response.data?.data ?: emptyList()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        // 加载近期战绩（优先使用 profile.games）
+        val initialGames = profile?.games?.data ?: emptyList()
+        gameRecords = initialGames
+        nextPage = if (initialGames.isNotEmpty()) 2 else 1
+        hasMore = true
+        if (initialGames.isEmpty()) {
+            loadMoreGames(
+                uid = uid,
+                page = nextPage,
+                onStart = { isLoadingMore = true },
+                onFinish = { loadedCount ->
+                    isLoadingMore = false
+                    if (loadedCount == 0) {
+                        hasMore = false
+                    } else {
+                        nextPage += 1
+                    }
+                },
+                onResult = { newItems ->
+                    gameRecords = newItems
+                }
+            )
         }
         isLoading = false
+    }
+
+    LaunchedEffect(listState, hasMore, isLoadingMore) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastVisibleIndex ->
+                val total = listState.layoutInfo.totalItemsCount
+                val shouldLoadMore = lastVisibleIndex != null && lastVisibleIndex >= total - 2
+                if (shouldLoadMore && hasMore && !isLoadingMore && gameRecords.isNotEmpty()) {
+                    scope.launch {
+                        loadMoreGames(
+                            uid = uid,
+                            page = nextPage,
+                            onStart = { isLoadingMore = true },
+                            onFinish = { loadedCount ->
+                                isLoadingMore = false
+                                if (loadedCount == 0) {
+                                    hasMore = false
+                                } else {
+                                    nextPage += 1
+                                }
+                            },
+                            onResult = { newItems ->
+                                gameRecords = gameRecords + newItems
+                            }
+                        )
+                    }
+                }
+            }
     }
 
     Scaffold(
@@ -133,7 +190,8 @@ fun UserDetailScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(paddingValues),
+                state = listState
             ) {
                 // 用户信息头部
                 item {
@@ -508,7 +566,7 @@ fun UserDetailScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                val displayRecords = profile?.games?.data ?: gameRecords
+                val displayRecords = gameRecords
                 if (displayRecords.isEmpty()) {
                     item {
                         Card(
@@ -527,8 +585,29 @@ fun UserDetailScreen(
                         }
                     }
                 } else {
-                    items(displayRecords.take(10)) { record ->
-                        GameRecordItem(record = record)
+                    item {
+                        GameRecordHeaderRow()
+                    }
+                    itemsIndexed(displayRecords) { index, record ->
+                        GameRecordItem(
+                            index = index + 1,
+                            record = record,
+                            currentUid = uid,
+                            onNavigateToUser = onNavigateToUser,
+                            onNavigateToEvent = onNavigateToEvent
+                        )
+                    }
+                    if (isLoadingMore) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                            }
+                        }
                     }
                 }
 
@@ -793,16 +872,26 @@ private fun ScoreTrendChart(scoreHistory: List<ScoreHistory>, modifier: Modifier
 }
 
 @Composable
-private fun GameRecordItem(record: GameRecord) {
-    val isWin = record.isWin
-    val resultColor = if (isWin) Color(0xFF39B54A) else Color(0xFFE6326E)
-
-    // 胜负标记
-    val resultText = when {
-        record.isGroupMatch && isWin -> "胜"
-        record.isGroupMatch && !isWin -> "负"
-        isWin -> "胜"
-        else -> "负"
+private fun GameRecordItem(
+    index: Int,
+    record: GameRecord,
+    currentUid: String,
+    onNavigateToUser: (String) -> Unit,
+    onNavigateToEvent: (String) -> Unit
+) {
+    val name1 = record.username1?.ifBlank { "未知" } ?: "未知"
+    val name1b = record.username11?.takeIf { it.isNotBlank() }
+    val name2 = record.username2?.ifBlank { "未知" } ?: "未知"
+    val name2b = record.username22?.takeIf { it.isNotBlank() }
+    val dateText = record.matchDate?.take(10) ?: "-"
+    val eventId = record.eventid
+    val canOpenEvent = !eventId.isNullOrBlank() && eventId != "0"
+    val changeValue = record.score1?.toIntOrNull()
+    val changeColor = when {
+        changeValue == null -> TextSecondary
+        changeValue > 0 -> Color(0xFF39B54A)
+        changeValue < 0 -> Color(0xFFE6326E)
+        else -> TextSecondary
     }
 
     Card(
@@ -813,35 +902,151 @@ private fun GameRecordItem(record: GameRecord) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 8.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = resultText,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = resultColor,
-                modifier = Modifier.width(40.dp)
+                text = index.toString(),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.weight(0.5f)
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = record.eventTitleOrTitle?.ifBlank { "未知赛事" } ?: "未知赛事",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = record.matchDate ?: "",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
-                )
-            }
+
+            NameColumn(
+                primaryName = name1,
+                secondaryName = name1b,
+                onPrimaryClick = {
+                    val targetUid = record.uid1?.ifBlank { null } ?: currentUid
+                    if (targetUid.isNotBlank()) onNavigateToUser(targetUid)
+                },
+                onSecondaryClick = null,
+                modifier = Modifier.weight(2.3f)
+            )
+
+            NameColumn(
+                primaryName = name2,
+                secondaryName = name2b,
+                onPrimaryClick = {
+                    val targetUid = record.uid2?.ifBlank { null }
+                    if (!targetUid.isNullOrBlank()) onNavigateToUser(targetUid)
+                },
+                onSecondaryClick = null,
+                modifier = Modifier.weight(2.3f)
+            )
+
             Text(
                 text = record.scoreText,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = if (record.isGroupMatch) Color(0xFFF89703) else MaterialTheme.colorScheme.onSurface
+                color = if (record.isGroupMatch) Color(0xFFF89703) else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .weight(0.6f)
+                    .clickable(enabled = canOpenEvent) {
+                        onNavigateToEvent(eventId!!)
+                    },
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+
+            Text(
+                text = record.scoreChangeText,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+                color = changeColor,
+                modifier = Modifier
+                    .weight(0.6f)
+                    .clickable(enabled = canOpenEvent) {
+                        onNavigateToEvent(eventId!!)
+                    },
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+
+            Text(
+                text = dateText,
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                modifier = Modifier
+                    .weight(2.3f)
+                    .clickable(enabled = canOpenEvent) {
+                        onNavigateToEvent(eventId!!)
+                    },
+                maxLines = 1,
+                overflow = TextOverflow.Clip,
+                textAlign = androidx.compose.ui.text.style.TextAlign.End
             )
         }
     }
+}
+
+@Composable
+private fun NameColumn(
+    primaryName: String,
+    secondaryName: String?,
+    onPrimaryClick: (() -> Unit)?,
+    onSecondaryClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = primaryName,
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 2,
+            overflow = TextOverflow.Clip,
+            modifier = Modifier
+                .clickable(enabled = onPrimaryClick != null) {
+                    onPrimaryClick?.invoke()
+                }
+        )
+        if (!secondaryName.isNullOrBlank()) {
+            Text(
+                text = secondaryName,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Clip,
+                modifier = Modifier
+                    .clickable(enabled = onSecondaryClick != null) {
+                        onSecondaryClick?.invoke()
+                    }
+            )
+        }
+    }
+}
+
+@Composable
+private fun GameRecordHeaderRow() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HeaderCell(text = "序号", weight = 0.5f, alignEnd = false)
+            HeaderCell(text = "姓名", weight = 2.3f, alignEnd = false)
+            HeaderCell(text = "姓名", weight = 2.3f, alignEnd = false)
+            HeaderCell(text = "比分", weight = 0.6f, alignEnd = false)
+            HeaderCell(text = "变化", weight = 0.6f, alignEnd = false)
+            HeaderCell(text = "日期", weight = 2.3f, alignEnd = true)
+        }
+    }
+}
+
+@Composable
+private fun RowScope.HeaderCell(text: String, weight: Float, alignEnd: Boolean) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelSmall,
+        color = TextSecondary,
+        modifier = Modifier.weight(weight),
+        textAlign = if (alignEnd) androidx.compose.ui.text.style.TextAlign.End
+        else androidx.compose.ui.text.style.TextAlign.Center,
+        maxLines = 1,
+        overflow = TextOverflow.Clip
+    )
 }
 
 @Composable
@@ -859,5 +1064,28 @@ private fun HonorRow(honor: HonorIconItem) {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(honor.subject ?: "", style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+private suspend fun loadMoreGames(
+    uid: String,
+    page: Int,
+    onStart: () -> Unit,
+    onFinish: (loadedCount: Int) -> Unit,
+    onResult: (List<GameRecord>) -> Unit
+) {
+    onStart()
+    var loaded = 0
+    try {
+        val response = HttpClient.api.getPageGamesByUid(uid, page)
+        if (response.isSuccess) {
+            val list = response.data?.data ?: emptyList()
+            onResult(list)
+            loaded = list.size
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    } finally {
+        onFinish(loaded)
     }
 }

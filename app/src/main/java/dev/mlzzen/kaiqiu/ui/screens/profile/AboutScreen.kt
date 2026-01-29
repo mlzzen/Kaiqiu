@@ -38,7 +38,7 @@ fun AboutScreen(onNavigateBack: () -> Unit) {
             Text("开球网", style = MaterialTheme.typography.headlineMedium)
             Text("版本 1.0.0", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(32.dp))
-            Text("开球网 - 乒乓球爱好者社区\n\n提供赛事查询、比分记录、球友交流等功能", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
+            Text("开球网 - 乒乓球爱好者社区\n\n提供比赛查询、比分记录、球友交流等功能", style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
             Spacer(modifier = Modifier.height(48.dp))
             TextButton(onClick = { }) { Text("访问官网") }
             Spacer(modifier = Modifier.height(16.dp))

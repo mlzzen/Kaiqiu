@@ -17,7 +17,7 @@ fun EventListScreen(onNavigateBack: () -> Unit, onNavigateToEvent: (String) -> U
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("赛事列表") },
+                title = { Text("比赛列表") },
                 navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回") } }
             )
         }
@@ -26,7 +26,7 @@ fun EventListScreen(onNavigateBack: () -> Unit, onNavigateToEvent: (String) -> U
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(64.dp), tint = TextSecondary)
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("暂无赛事", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                Text("暂无比赛", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
             }
         }
     }

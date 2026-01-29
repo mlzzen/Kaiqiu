@@ -160,6 +160,12 @@ fun KaiqiuNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToEvents = {
                     navController.navigate(Screen.UserEvents.createRoute(uid))
+                },
+                onNavigateToUser = { targetUid ->
+                    navController.navigate(Screen.UserDetail.createRoute(targetUid))
+                },
+                onNavigateToEvent = { eventid ->
+                    navController.navigate(Screen.EventDetail.createRoute(eventid))
                 }
             )
         }

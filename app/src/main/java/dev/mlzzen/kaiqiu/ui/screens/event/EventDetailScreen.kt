@@ -139,7 +139,7 @@ fun EventDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("赛事详情") },
+                title = { Text("比赛详情") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -310,7 +310,7 @@ private fun MainDetailTab(eventDetail: EventDetail?) {
     val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        // 赛事标题
+        // 比赛标题
         Text(
             text = eventDetail?.title ?: "",
             style = MaterialTheme.typography.titleMedium,
@@ -403,10 +403,10 @@ private fun MainDetailTab(eventDetail: EventDetail?) {
 
         HorizontalDivider()
 
-        // 赛事说明
+        // 比赛说明
         if (!eventDetail?.note.isNullOrEmpty()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("赛事说明", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                Text("比赛说明", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = eventDetail?.note ?: "",

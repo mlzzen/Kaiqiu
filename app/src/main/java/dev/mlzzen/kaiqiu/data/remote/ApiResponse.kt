@@ -220,18 +220,28 @@ data class ScoreHistory(
 data class GameRecord(
     @SerializedName("gameid")
     val gameid: String?,
+    @SerializedName("eventid")
+    val eventid: String?,
+    @SerializedName("uid1")
+    val uid1: String?,
     @SerializedName("title")
-    val title: String?,            // 赛事标题
+    val title: String?,            // 比赛标题
     @SerializedName("eventTitle")
-    val eventTitle: String?,       // 赛事标题（备用）
+    val eventTitle: String?,       // 比赛标题（备用）
     @SerializedName("result1")
     val result1: String?,          // 我方得分
     @SerializedName("result2")
     val result2: String?,          // 对方得分
+    @SerializedName("score1")
+    val score1: String?,           // 积分变化
     @SerializedName("username1")
     val username1: String?,        // 我方姓名
+    @SerializedName("username11")
+    val username11: String?,       // 双打队友姓名
     @SerializedName("username2")
     val username2: String?,        // 对方姓名
+    @SerializedName("username22")
+    val username22: String?,       // 双打对手姓名
     @SerializedName("dateline")
     val dateline: String?,         // 比赛时间
     @SerializedName("groupid")
@@ -241,7 +251,7 @@ data class GameRecord(
     @SerializedName("uid2")
     val uid2: String?              // 对方用户ID
 ) {
-    // 获取赛事标题
+    // 获取比赛标题
     val eventTitleOrTitle: String?
         get() = eventTitle ?: title ?: ""
 
@@ -252,6 +262,15 @@ data class GameRecord(
     // 获取比分文本
     val scoreText: String
         get() = "${result1 ?: "0"}:${result2 ?: "0"}"
+
+    // 获取积分变化文本
+    val scoreChangeText: String
+        get() {
+            val raw = score1?.trim()
+            if (raw.isNullOrBlank()) return "-"
+            val value = raw.toIntOrNull() ?: return raw
+            return if (value > 0) "+$value" else value.toString()
+        }
 
     // 获取对手名称
     val opponentName: String?
@@ -271,7 +290,7 @@ data class GameRecord(
 }
 
 /**
- * 赛事历史
+ * 比赛历史
  * 参考源项目 eventHis.vue
  */
 data class EventHistory(
@@ -316,7 +335,7 @@ data class UserFollowListResponse(
 )
 
 /**
- * 赛事项
+ * 比赛项
  */
 data class EventItem(
     @SerializedName("eventid")
@@ -682,7 +701,7 @@ data class GroupMatch(
 )
 
 /**
- * 赛事详情响应
+ * 比赛详情响应
  */
 data class EventDetailResponse(
     @SerializedName("items")
@@ -706,7 +725,7 @@ data class EventItemInfo(
 )
 
 /**
- * 赛事详情
+ * 比赛详情
  */
 data class EventDetail(
     @SerializedName("eventid")
