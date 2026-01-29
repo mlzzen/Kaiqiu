@@ -59,6 +59,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
 
+import dev.mlzzen.kaiqiu.ui.state.LocalUserState
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun UserDetailScreen(
@@ -68,6 +70,8 @@ fun UserDetailScreen(
     onNavigateToUser: (String) -> Unit,
     onNavigateToEvent: (String) -> Unit
 ) {
+    val userState = LocalUserState.current
+    val currentUserUid = userState.userInfo.value?.uid
     val userRepository = remember { UserRepository() }
     var profile by remember { mutableStateOf<AdvProfile?>(null) }
     var gameRecords by remember { mutableStateOf<List<GameRecord>>(emptyList()) }
@@ -300,18 +304,21 @@ fun UserDetailScreen(
                     }
                 }
 
-                // 操作按钮
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        ActionButton(icon = Icons.Default.Star, label = "参赛记录", onClick = onNavigateToEvents)
-                        ActionButton(icon = Icons.Default.Favorite, label = "关注", onClick = { })
-                        ActionButton(icon = Icons.Default.Person, label = "粉丝", onClick = { })
+                // 操作按钮（仅当前用户可见）
+                val isCurrentUser = uid == currentUserUid
+                if (isCurrentUser) {
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            ActionButton(icon = Icons.Default.Star, label = "参赛记录", onClick = onNavigateToEvents)
+                            ActionButton(icon = Icons.Default.Favorite, label = "关注", onClick = { })
+                            ActionButton(icon = Icons.Default.Person, label = "粉丝", onClick = { })
+                        }
                     }
                 }
 
