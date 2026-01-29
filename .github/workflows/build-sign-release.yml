@@ -89,6 +89,10 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          echo "KEYSTORE_BASE64 len: ${#KEYSTORE_BASE64}"
+          echo "KEYSTORE_PASSWORD len: ${#KEYSTORE_PASSWORD}"
+          echo "KEY_ALIAS len: ${#KEY_ALIAS}"
+          echo "KEY_PASSWORD len: ${#KEY_PASSWORD}"
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "还原签名密钥..."
             echo "$KEYSTORE_BASE64" | base64 -d > app/keystore.jks
