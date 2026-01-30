@@ -40,9 +40,6 @@ sealed class Screen(
     }
 
     // Match
-    data object MatchDetail : Screen("match/{gameid}", "比赛详情") {
-        fun createRoute(gameid: String) = "match/$gameid"
-    }
     data object ScoreEntry : Screen("score/{eventid}/{itemid}", "记分") {
         fun createRoute(eventid: String, itemid: String) = "score/$eventid/$itemid"
     }

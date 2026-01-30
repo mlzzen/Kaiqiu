@@ -32,7 +32,6 @@ import kotlinx.coroutines.SupervisorJob
 fun UserEventsScreen(
     uid: String,
     onNavigateBack: () -> Unit,
-    onNavigateToMatch: (String) -> Unit,
     onNavigateToEvent: (String) -> Unit
 ) {
     val userRepository = remember { UserRepository() }

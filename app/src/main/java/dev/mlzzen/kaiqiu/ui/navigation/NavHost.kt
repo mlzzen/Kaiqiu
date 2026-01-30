@@ -12,7 +12,6 @@ import dev.mlzzen.kaiqiu.ui.screens.event.EventListScreen
 import dev.mlzzen.kaiqiu.ui.screens.event.EventMembersScreen
 import dev.mlzzen.kaiqiu.ui.screens.home.HomeScreen
 import dev.mlzzen.kaiqiu.ui.screens.login.LoginScreen
-import dev.mlzzen.kaiqiu.ui.screens.match.MatchDetailScreen
 import dev.mlzzen.kaiqiu.ui.screens.match.ScoreEntryScreen
 import dev.mlzzen.kaiqiu.ui.screens.match.GroupScoreScreen
 import dev.mlzzen.kaiqiu.ui.screens.profile.AboutScreen
@@ -178,9 +177,6 @@ fun KaiqiuNavHost(
             UserEventsScreen(
                 uid = uid,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToMatch = { gameid ->
-                    navController.navigate(Screen.MatchDetail.createRoute(gameid))
-                },
                 onNavigateToEvent = { eventid ->
                     navController.navigate(Screen.EventDetail.createRoute(eventid))
                 }
@@ -242,18 +238,6 @@ fun KaiqiuNavHost(
                 onNavigateToUser = { uid ->
                     navController.navigate(Screen.UserDetail.createRoute(uid))
                 }
-            )
-        }
-
-        // Match
-        composable(
-            route = Screen.MatchDetail.route,
-            arguments = listOf(navArgument("gameid") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val gameid = backStackEntry.arguments?.getString("gameid") ?: ""
-            MatchDetailScreen(
-                gameid = gameid,
-                onNavigateBack = { navController.popBackStack() }
             )
         }
 
