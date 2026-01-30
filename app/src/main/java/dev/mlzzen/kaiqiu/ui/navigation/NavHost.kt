@@ -215,6 +215,9 @@ fun KaiqiuNavHost(
                 },
                 onNavigateToScore = { itemid ->
                     navController.navigate(Screen.ScoreEntry.createRoute(eventid, itemid))
+                },
+                onNavigateToUser = { uid ->
+                    navController.navigate(Screen.UserDetail.createRoute(uid))
                 }
             )
         }

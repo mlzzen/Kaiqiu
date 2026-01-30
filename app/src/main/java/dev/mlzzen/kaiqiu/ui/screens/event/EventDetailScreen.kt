@@ -40,7 +40,8 @@ fun EventDetailScreen(
     eventid: String,
     onNavigateBack: () -> Unit,
     onNavigateToMembers: (matchId: String, itemId: String) -> Unit,
-    onNavigateToScore: (String) -> Unit
+    onNavigateToScore: (String) -> Unit,
+    onNavigateToUser: (String) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -325,7 +326,8 @@ fun EventDetailScreen(
                                 ScoreChangeTab(
                                     scoreChanges = scoreChanges,
                                     myScoreChanges = myScoreChanges,
-                                    activeItemId = activeItemId
+                                    activeItemId = activeItemId,
+                                    onNavigateToUser = onNavigateToUser
                                 )
                             }
                         }
@@ -885,7 +887,8 @@ private fun ResultRow(rank: Int, nickname: String, score: String, avatar: String
 private fun ScoreChangeTab(
     scoreChanges: Map<String, List<ScoreChange>>,
     myScoreChanges: Map<String, List<MyScoreChange>>,
-    activeItemId: String?
+    activeItemId: String?,
+    onNavigateToUser: (String) -> Unit
 ) {
     // 获取当前选中项目的积分数据，如果没有选中则显示所有
     val currentItemChanges = when {
@@ -926,7 +929,10 @@ private fun ScoreChangeTab(
 
             // 积分变化列表
             currentItemChanges.forEach { change ->
-                ScoreChangeRow(change = change)
+                ScoreChangeRow(
+                    change = change,
+                    onClick = { onNavigateToUser(change.uid) }
+                )
                 HorizontalDivider()
             }
 
@@ -936,7 +942,9 @@ private fun ScoreChangeTab(
                 if (myRecords.isNotEmpty()) {
                     UserMatchRecordTable(
                         userName = currentUserChange.realname ?: currentUserChange.username ?: "我",
-                        myRecords = myRecords
+                        myRecords = myRecords,
+                        currentUserUid = currentUserChange.uid,
+                        onNavigateToUser = onNavigateToUser
                     )
                 }
             }
@@ -1012,7 +1020,9 @@ private fun ScoreChangeTab(
 @Composable
 private fun UserMatchRecordTable(
     userName: String,
-    myRecords: List<MyScoreChange>
+    myRecords: List<MyScoreChange>,
+    currentUserUid: String,
+    onNavigateToUser: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -1047,6 +1057,7 @@ private fun UserMatchRecordTable(
                 else -> "-"
             }
             val opponentName = record.username2 ?: "-"
+            val opponentUid = record.uid2
             val changeValue = record.score1 ?: ""
             val changeColor = when {
                 changeValue.startsWith("+") -> Color(0xFF39B54A)
@@ -1061,8 +1072,21 @@ private fun UserMatchRecordTable(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text((index + 1).toString(), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
-                Text("我", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                Text(opponentName, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                // "我" - 当前用户，不跳转
+                Text(
+                    text = "我",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f)
+                )
+                // 对手 - 可点击跳转
+                Text(
+                    text = opponentName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (opponentUid != null) Color(0xFF39B54A) else Color.Unspecified,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(enabled = opponentUid != null) { opponentUid?.let { onNavigateToUser(it) } }
+                )
                 Text(displayScore, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
                 Text(
                     changeValue,
@@ -1078,7 +1102,10 @@ private fun UserMatchRecordTable(
 }
 
 @Composable
-private fun ScoreChangeRow(change: ScoreChange) {
+private fun ScoreChangeRow(
+    change: ScoreChange,
+    onClick: () -> Unit
+) {
     val changeValue = change.change?.toDoubleOrNull() ?: 0.0
     val changeColor = when {
         changeValue > 0 -> Color(0xFF39B54A)
@@ -1093,6 +1120,7 @@ private fun ScoreChangeRow(change: ScoreChange) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1100,6 +1128,7 @@ private fun ScoreChangeRow(change: ScoreChange) {
         Text(
             text = change.realname ?: change.username ?: "-",
             style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF39B54A),
             modifier = Modifier.weight(1f)
         )
         Text(
