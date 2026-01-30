@@ -2,6 +2,10 @@ package dev.mlzzen.kaiqiu.ui.screens.event
 
 import android.content.Intent
 import android.net.Uri
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import dev.mlzzen.kaiqiu.data.remote.*
 import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
@@ -427,13 +431,104 @@ private fun MainDetailTab(eventDetail: EventDetail?) {
                 } catch (e: Exception) {
                     eventDetail?.detail ?: ""
                 }
-                Text(
-                    text = decodedDetail,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                HtmlText(htmlContent = decodedDetail)
             }
         }
     }
+}
+
+/**
+ * 渲染 HTML 内容的组件
+ * 使用 WebView 完整渲染 HTML，包括图片、链接等
+ */
+@Composable
+fun HtmlText(
+    htmlContent: String,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+
+    AndroidView(
+        modifier = modifier.fillMaxWidth(),
+        factory = { ctx ->
+            WebView(ctx).apply {
+                settings.apply {
+                    javaScriptEnabled = false
+                    loadWithOverviewMode = true
+                    useWideViewPort = true
+                    builtInZoomControls = false
+                    displayZoomControls = false
+                    domStorageEnabled = true
+                    cacheMode = WebSettings.LOAD_NO_CACHE
+                    // 允许文件访问
+                    allowFileAccess = true
+                }
+                webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+                        return try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            context.startActivity(intent)
+                            true
+                        } catch (e: Exception) {
+                            false
+                        }
+                    }
+                }
+                webChromeClient = object : WebChromeClient() {}
+            }
+        },
+        update = { webView ->
+            // 构建完整的 HTML 文档
+            val fullHtml = """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                    <style>
+                        * {
+                            max-width: 100%;
+                        }
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            font-size: 14px;
+                            line-height: 1.6;
+                            color: #1a1a1a;
+                            padding: 8px;
+                            margin: 0;
+                        }
+                        img {
+                            max-width: 100% !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            display: block;
+                            margin: 8px 0;
+                        }
+                        div, p, span {
+                            max-width: 100% !important;
+                            word-wrap: break-word;
+                            overflow-wrap: break-word;
+                        }
+                        a {
+                            color: #39B54A;
+                            text-decoration: none;
+                        }
+                        p {
+                            margin: 8px 0;
+                        }
+                        table {
+                            max-width: 100% !important;
+                            width: 100% !important;
+                        }
+                    </style>
+                </head>
+                <body>
+                    $htmlContent
+                </body>
+                </html>
+            """.trimIndent()
+            webView.loadDataWithBaseURL(null, fullHtml, "text/html", "UTF-8", null)
+        }
+    )
 }
 
 @Composable
