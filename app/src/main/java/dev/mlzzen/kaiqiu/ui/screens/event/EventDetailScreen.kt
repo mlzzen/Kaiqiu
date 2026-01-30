@@ -1044,10 +1044,15 @@ private fun UserMatchRecordTable(
         myRecords.forEachIndexed { index, record ->
             val displayScore = when {
                 !record.result1.isNullOrEmpty() && !record.result2.isNullOrEmpty() -> "${record.result1}:${record.result2}"
-                !record.score1.isNullOrEmpty() -> record.score1
                 else -> "-"
             }
             val opponentName = record.username2 ?: "-"
+            val changeValue = record.score1 ?: ""
+            val changeColor = when {
+                changeValue.startsWith("+") -> Color(0xFF39B54A)
+                changeValue.startsWith("-") -> Color(0xFFE6326E)
+                else -> Color.Unspecified
+            }
 
             Row(
                 modifier = Modifier
@@ -1059,7 +1064,12 @@ private fun UserMatchRecordTable(
                 Text("我", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                 Text(opponentName, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                 Text(displayScore, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
-                Text("", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(50.dp))
+                Text(
+                    changeValue,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = changeColor,
+                    modifier = Modifier.width(50.dp)
+                )
                 Text("", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
             }
             HorizontalDivider()
