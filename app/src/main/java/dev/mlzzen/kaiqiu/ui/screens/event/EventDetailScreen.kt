@@ -52,7 +52,7 @@ fun EventDetailScreen(
     var error by remember { mutableStateOf<String?>(null) }
 
     // 赛程数据
-    var groupGames by remember { mutableStateOf<List<GroupGamesResponse>?>(null) }
+    var groupDataList by remember { mutableStateOf<List<GroupData>>(emptyList()) }
     var knockoutRounds by remember { mutableStateOf<List<RoundData>>(emptyList()) }
 
     // 成绩数据
@@ -67,41 +67,59 @@ fun EventDetailScreen(
 
     suspend fun loadScheduleData() {
         try {
-            val groupResponse = HttpClient.api.getGroupGames(mapOf("eventid" to eventid))
-            if (groupResponse.isSuccess && groupResponse.data != null) {
-                groupGames = listOf(groupResponse.data)
+            val params = mapOf("eventid" to eventid, "itemid" to (activeItemId ?: ""))
+            android.util.Log.d("EventDetail", "loadScheduleData params: $params")
+
+            val groupResponse = HttpClient.api.getGroupGames(params)
+            android.util.Log.d("EventDetail", "getGroupGames response: ${groupResponse.code}, data=${groupResponse.data?.size}")
+            if (groupResponse.isSuccess) {
+                groupDataList = groupResponse.data ?: emptyList()
             }
-            val knockoutResponse = HttpClient.api.getArrangeKnockout(mapOf("eventid" to eventid))
+
+            val knockoutResponse = HttpClient.api.getArrangeKnockout(params)
+            android.util.Log.d("EventDetail", "getArrangeKnockout response: ${knockoutResponse.code}, rounds=${knockoutResponse.data?.rounds?.size}")
             if (knockoutResponse.isSuccess) {
                 knockoutRounds = knockoutResponse.data?.rounds ?: emptyList()
             }
         } catch (e: Exception) {
+            android.util.Log.e("EventDetail", "loadScheduleData error", e)
             e.printStackTrace()
         }
     }
 
     suspend fun loadResultData() {
         try {
-            val honorResponse = HttpClient.api.getAllHonors(mapOf("eventid" to eventid))
+            val params = mapOf("eventid" to eventid, "itemid" to (activeItemId ?: ""))
+            android.util.Log.d("EventDetail", "loadResultData params: $params")
+
+            val honorResponse = HttpClient.api.getAllHonors(params)
+            android.util.Log.d("EventDetail", "getAllHonors response: ${honorResponse.code}, honors=${honorResponse.data?.size}")
             if (honorResponse.isSuccess) {
                 honors = honorResponse.data ?: emptyList()
             }
-            val resultResponse = HttpClient.api.getAllResult(mapOf("eventid" to eventid))
+
+            val resultResponse = HttpClient.api.getAllResult(params)
+            android.util.Log.d("EventDetail", "getAllResult response: ${resultResponse.code}, results=${resultResponse.data?.size}")
             if (resultResponse.isSuccess) {
                 results = resultResponse.data ?: emptyList()
             }
         } catch (e: Exception) {
+            android.util.Log.e("EventDetail", "loadResultData error", e)
             e.printStackTrace()
         }
     }
 
     suspend fun loadScoreData() {
         try {
+            android.util.Log.d("EventDetail", "loadScoreData eventid: $eventid")
+
             val scoreResponse = HttpClient.api.getScoreChangeByEventid(eventid)
+            android.util.Log.d("EventDetail", "getScoreChangeByEventid response: ${scoreResponse.code}, changes=${scoreResponse.data?.size}")
             if (scoreResponse.isSuccess) {
                 scoreChanges = scoreResponse.data ?: emptyList()
             }
         } catch (e: Exception) {
+            android.util.Log.e("EventDetail", "loadScoreData error", e)
             e.printStackTrace()
         }
     }
@@ -290,7 +308,7 @@ fun EventDetailScreen(
                         1 -> {
                             item {
                                 ScheduleTab(
-                                    groupGames = groupGames,
+                                    groupDataList = groupDataList,
                                     knockoutRounds = knockoutRounds,
                                     onNavigateToScore = { onNavigateToScore(activeItemId ?: "") }
                                 )
@@ -546,61 +564,34 @@ private fun DetailRow(label: String, value: String) {
 
 @Composable
 private fun ScheduleTab(
-    groupGames: List<GroupGamesResponse>?,
+    groupDataList: List<GroupData>,
     knockoutRounds: List<RoundData>,
     onNavigateToScore: () -> Unit
 ) {
-    val hasData = (groupGames?.isNotEmpty() == true) || knockoutRounds.isNotEmpty()
+    val hasData = groupDataList.isNotEmpty() || knockoutRounds.isNotEmpty()
 
     Column(modifier = Modifier.fillMaxWidth()) {
         if (hasData) {
-            // 小组赛
-            groupGames?.forEach { groupResponse ->
-                groupResponse.groups?.forEach { group ->
-                    if (!group.groupName.isNullOrEmpty()) {
-                        Text(
-                            text = "小组: ${group.groupName}",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                        )
-                        HorizontalDivider()
-                    }
-                    // 小组积分表
-                    if (group.names?.isNotEmpty() == true) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("选手", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                                Text("胜", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
-                                Text("负", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
-                                Text("净胜局", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            group.names.forEachIndexed { index, player ->
-                                val wins = group.scores?.get("wins_$index") ?: "0"
-                                val losses = group.scores?.get("losses_$index") ?: "0"
-                                val netWins = group.scores?.get("net_$index") ?: "0"
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        player.username ?: "-",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    Text(wins, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
-                                    Text(losses, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
-                                    Text(netWins, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
-                                }
-                            }
-                        }
-                    }
+            // 小组赛 - 交叉对阵表
+            groupDataList.forEach { group ->
+                // 显示组名（可能是 matchName 或 tablenum）
+                val groupTitle = group.matchName?.takeIf { it.isNotEmpty() }
+                    ?: group.tablenum?.takeIf { it.isNotEmpty() }
+                    ?: "小组赛"
+                Text(
+                    text = "第${groupTitle}台",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+                HorizontalDivider()
+
+                // 构建交叉对阵表
+                if (group.names?.isNotEmpty() == true) {
+                    CrossMatchTable(
+                        names = group.names,
+                        scores = group.scores
+                    )
                 }
             }
 
@@ -644,6 +635,93 @@ private fun ScheduleTab(
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(onClick = onNavigateToScore) {
                         Text("录入成绩")
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 交叉对阵表组件
+ * 显示选手之间的比赛结果矩阵
+ */
+@Composable
+private fun CrossMatchTable(
+    names: List<GroupPlayerName>,
+    scores: Map<String, String>
+) {
+    Column(modifier = Modifier.padding(8.dp)) {
+        // 表头行
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // 左上角空白单元格
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .padding(4.dp)
+            )
+            // 选手序号
+            names.forEachIndexed { index, _ ->
+                Text(
+                    text = (index + 1).toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(4.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        }
+
+        // 数据行
+        names.forEachIndexed { rowIndex, rowPlayer ->
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // 行首：选手序号 + 名字
+                Row(
+                    modifier = Modifier
+                        .width(80.dp)
+                        .padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${rowIndex + 1}",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                    Text(
+                        text = rowPlayer.username?.substringAfter(" ")?.substringBefore(" ") ?: rowPlayer.username ?: "",
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1
+                    )
+                }
+
+                // 交叉对阵单元格
+                names.forEachIndexed { colIndex, colPlayer ->
+                    val scoreKey = "${rowPlayer.uid}:${colPlayer.uid}"
+                    val score = scores[scoreKey]
+                    val isDiagonal = rowIndex == colIndex
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(2.dp)
+                            .background(
+                                if (isDiagonal) Color(0xFFF5F5F5) else Color.Transparent,
+                                RoundedCornerShape(4.dp)
+                            )
+                            .padding(vertical = 4.dp, horizontal = 2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isDiagonal) "-" else score ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isDiagonal) Color.Gray else Color.Unspecified,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
                     }
                 }
             }

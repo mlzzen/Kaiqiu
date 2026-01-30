@@ -68,7 +68,7 @@ fun GroupScoreScreen(
                     mapOf("eventid" to eventid, "itemid" to itemid)
                 )
                 if (response.isSuccess) {
-                    groups = response.data?.groups ?: emptyList()
+                    groups = response.data ?: emptyList()
                 } else {
                     error = response.msg
                 }

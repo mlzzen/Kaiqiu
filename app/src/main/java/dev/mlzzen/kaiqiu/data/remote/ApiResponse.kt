@@ -647,7 +647,11 @@ data class GroupGamesResponse(
  */
 data class GroupData(
     @SerializedName("groupName")
-    val groupName: String,
+    val groupName: String?,
+    @SerializedName("matchName")
+    val matchName: String?,
+    @SerializedName("tablenum")
+    val tablenum: String?,
     @SerializedName("names")
     val names: List<GroupPlayerName>,
     @SerializedName("scores")

@@ -334,7 +334,7 @@ class MatchRepository(
         }
     }
 
-    suspend fun getGroupGames(eventid: String, itemid: String): Result<GroupGamesResponse> {
+    suspend fun getGroupGames(eventid: String, itemid: String): Result<List<GroupData>> {
         return Result.safeApiCall {
             api.getGroupGames(
                 mapOf("eventid" to eventid, "itemid" to itemid)

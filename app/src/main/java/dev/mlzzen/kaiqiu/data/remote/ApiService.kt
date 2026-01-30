@@ -108,7 +108,7 @@ interface ApiService {
     suspend fun updateScore(@QueryMap params: Map<String, String>): ApiResponse<Unit>
 
     @GET("Match/init_h_games")
-    suspend fun getGroupGames(@QueryMap params: Map<String, String>): ApiResponse<GroupGamesResponse>
+    suspend fun getGroupGames(@QueryMap params: Map<String, String>): ApiResponse<List<GroupData>>
 
     // ============ Event ============
 
