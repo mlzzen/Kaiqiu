@@ -866,14 +866,44 @@ data class ResultItem(
 data class ScoreChange(
     @SerializedName("uid")
     val uid: String,
-    @SerializedName("nickname")
-    val nickname: String?,
-    @SerializedName("beforeScore")
-    val beforeScore: String?,
-    @SerializedName("afterScore")
-    val afterScore: String?,
+    @SerializedName("username")
+    val username: String?,
+    @SerializedName("realname")
+    val realname: String?,
+    @SerializedName("prescore")
+    val prescore: String?,
+    @SerializedName("postscore")
+    val postscore: String?,
     @SerializedName("change")
-    val change: String?
+    val change: String?,
+    @SerializedName("detail")
+    val detail: String?
+)
+
+/**
+ * 积分变化响应（itemid -> 积分变化列表）
+ */
+data class ScoreChangeResponse(
+    @SerializedName("sc")
+    val sc: Map<String, List<ScoreChange>>,
+    @SerializedName("mysc")
+    val mysc: Map<String, List<MyScoreChange>>?
+)
+
+/**
+ * 当前用户的积分变化记录
+ */
+data class MyScoreChange(
+    @SerializedName("uid2")
+    val uid2: String?,
+    @SerializedName("username2")
+    val username2: String?,
+    @SerializedName("result1")
+    val result1: String?,
+    @SerializedName("result2")
+    val result2: String?,
+    @SerializedName("score1")
+    val score1: String?
 )
 
 /**

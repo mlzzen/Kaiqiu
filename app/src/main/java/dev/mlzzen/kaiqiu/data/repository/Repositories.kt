@@ -379,9 +379,9 @@ class EventRepository(
         }
     }
 
-    suspend fun getScoreChange(eventid: String): Result<List<ScoreChange>> {
+    suspend fun getScoreChange(eventid: String): Result<ScoreChangeResponse> {
         return Result.safeApiCall {
-            api.getScoreChangeByEventid(eventid).getOrThrow()
+            api.getScoreChange(eventid).getOrThrow()
         }
     }
 }

@@ -128,7 +128,7 @@ interface ApiService {
     suspend fun getAllResult(@QueryMap params: Map<String, String>): ApiResponse<List<ResultItem>>
 
     @GET("Match/getScoreChange2")
-    suspend fun getScoreChangeByEventid(@Query("eventid") eventid: String): ApiResponse<List<ScoreChange>>
+    suspend fun getScoreChange(@Query("eventid") eventid: String): ApiResponse<ScoreChangeResponse>
 
     // ============ Public ============
 

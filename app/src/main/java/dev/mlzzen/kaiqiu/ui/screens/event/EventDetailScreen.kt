@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import dev.mlzzen.kaiqiu.data.remote.*
+import dev.mlzzen.kaiqiu.ui.state.LocalUserState
 import dev.mlzzen.kaiqiu.ui.theme.TextSecondary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -60,7 +61,8 @@ fun EventDetailScreen(
     var results by remember { mutableStateOf<List<ResultItem>>(emptyList()) }
 
     // 积分数据
-    var scoreChanges by remember { mutableStateOf<List<ScoreChange>>(emptyList()) }
+    var scoreChanges by remember { mutableStateOf<Map<String, List<ScoreChange>>>(emptyMap()) }
+    var myScoreChanges by remember { mutableStateOf<Map<String, List<MyScoreChange>>>(emptyMap()) }
 
     val tabList = listOf("详情", "赛程", "成绩", "积分")
     val crtItem: EventItemInfo? = items.find { it.id == activeItemId }
@@ -113,10 +115,11 @@ fun EventDetailScreen(
         try {
             android.util.Log.d("EventDetail", "loadScoreData eventid: $eventid")
 
-            val scoreResponse = HttpClient.api.getScoreChangeByEventid(eventid)
-            android.util.Log.d("EventDetail", "getScoreChangeByEventid response: ${scoreResponse.code}, changes=${scoreResponse.data?.size}")
+            val scoreResponse = HttpClient.api.getScoreChange(eventid)
+            android.util.Log.d("EventDetail", "getScoreChange response: ${scoreResponse.code}, data=${scoreResponse.data?.sc?.size}")
             if (scoreResponse.isSuccess) {
-                scoreChanges = scoreResponse.data ?: emptyList()
+                scoreChanges = scoreResponse.data?.sc ?: emptyMap()
+                myScoreChanges = scoreResponse.data?.mysc ?: emptyMap()
             }
         } catch (e: Exception) {
             android.util.Log.e("EventDetail", "loadScoreData error", e)
@@ -318,7 +321,13 @@ fun EventDetailScreen(
                             item { ResultTab(honors = honors, results = results) }
                         }
                         3 -> {
-                            item { ScoreChangeTab(scoreChanges = scoreChanges) }
+                            item {
+                                ScoreChangeTab(
+                                    scoreChanges = scoreChanges,
+                                    myScoreChanges = myScoreChanges,
+                                    activeItemId = activeItemId
+                                )
+                            }
                         }
                     }
                 }
@@ -873,8 +882,30 @@ private fun ResultRow(rank: Int, nickname: String, score: String, avatar: String
 }
 
 @Composable
-private fun ScoreChangeTab(scoreChanges: List<ScoreChange>) {
-    val hasData = scoreChanges.isNotEmpty()
+private fun ScoreChangeTab(
+    scoreChanges: Map<String, List<ScoreChange>>,
+    myScoreChanges: Map<String, List<MyScoreChange>>,
+    activeItemId: String?
+) {
+    // 获取当前选中项目的积分数据，如果没有选中则显示所有
+    val currentItemChanges = when {
+        activeItemId != null && scoreChanges.containsKey(activeItemId) -> {
+            scoreChanges[activeItemId] ?: emptyList()
+        }
+        else -> {
+            // 合并所有项目的积分变化
+            scoreChanges.values.flatten()
+        }
+    }
+
+    val hasData = currentItemChanges.isNotEmpty()
+
+    // 获取当前登录用户信息
+    val userState = LocalUserState.current
+    val currentUserUid = userState.userInfo.value?.uid
+
+    // 查找当前用户的积分变化记录
+    val currentUserChange = currentItemChanges.find { it.uid == currentUserUid }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         if (hasData) {
@@ -894,9 +925,63 @@ private fun ScoreChangeTab(scoreChanges: List<ScoreChange>) {
             HorizontalDivider()
 
             // 积分变化列表
-            scoreChanges.forEach { change ->
+            currentItemChanges.forEach { change ->
                 ScoreChangeRow(change = change)
                 HorizontalDivider()
+            }
+
+            // 当前用户的比赛记录
+            if (currentUserChange != null) {
+                val myRecords = activeItemId?.let { myScoreChanges[it] } ?: emptyList()
+                if (myRecords.isNotEmpty()) {
+                    UserMatchRecordTable(
+                        userName = currentUserChange.realname ?: currentUserChange.username ?: "我",
+                        myRecords = myRecords
+                    )
+                }
+            }
+
+            // 个人积分变化详情
+            val changesWithDetail = currentItemChanges.filter { !it.detail.isNullOrEmpty() }
+            if (changesWithDetail.isNotEmpty()) {
+                Text(
+                    text = "个人积分变化",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+                HorizontalDivider()
+
+                changesWithDetail.forEach { change ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = change.realname ?: change.username ?: "-",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "+${change.change}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFF39B54A)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = change.detail ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                    HorizontalDivider()
+                }
             }
         } else {
             Box(
@@ -920,6 +1005,68 @@ private fun ScoreChangeTab(scoreChanges: List<ScoreChange>) {
     }
 }
 
+/**
+ * 当前用户的比赛记录表格
+ * 表头：序号、我、对手、比分、变化、去评价
+ */
+@Composable
+private fun UserMatchRecordTable(
+    userName: String,
+    myRecords: List<MyScoreChange>
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "个人积分变化",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        )
+        HorizontalDivider()
+
+        // 表头
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF5F5F5))
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("序号", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
+            Text(userName, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+            Text("对手", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+            Text("比分", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
+            Text("变化", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(50.dp))
+            Text("去评价", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
+        }
+        HorizontalDivider()
+
+        // 真实数据行
+        myRecords.forEachIndexed { index, record ->
+            val displayScore = when {
+                !record.result1.isNullOrEmpty() && !record.result2.isNullOrEmpty() -> "${record.result1}:${record.result2}"
+                !record.score1.isNullOrEmpty() -> record.score1
+                else -> "-"
+            }
+            val opponentName = record.username2 ?: "-"
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text((index + 1).toString(), style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(40.dp))
+                Text("我", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                Text(opponentName, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                Text(displayScore, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
+                Text("", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(50.dp))
+                Text("", style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(60.dp))
+            }
+            HorizontalDivider()
+        }
+    }
+}
+
 @Composable
 private fun ScoreChangeRow(change: ScoreChange) {
     val changeValue = change.change?.toDoubleOrNull() ?: 0.0
@@ -939,13 +1086,14 @@ private fun ScoreChangeRow(change: ScoreChange) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // 姓名优先显示 realname，其次 username
         Text(
-            text = change.nickname ?: "-",
-            style = MaterialTheme.typography.bodySmall,
+            text = change.realname ?: change.username ?: "-",
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f)
         )
         Text(
-            text = change.beforeScore ?: "-",
+            text = change.prescore ?: "-",
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.width(70.dp)
         )
@@ -956,7 +1104,7 @@ private fun ScoreChangeRow(change: ScoreChange) {
             modifier = Modifier.width(60.dp)
         )
         Text(
-            text = change.afterScore ?: "-",
+            text = change.postscore ?: "-",
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.width(70.dp)
         )
