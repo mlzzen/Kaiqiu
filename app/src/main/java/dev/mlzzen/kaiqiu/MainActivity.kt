@@ -4,15 +4,22 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -42,7 +49,6 @@ fun KaiqiuApp() {
     val userState: UserState = rememberUserState(context)
 
     CompositionLocalProvider(LocalUserState provides userState) {
-        val isLoggedIn by userState.isLoggedIn.collectAsState()
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -61,11 +67,23 @@ fun KaiqiuApp() {
             Triple(Screen.Profile.route, "Profile", Icons.Default.Person)
         )
 
-        NavigationSuiteScaffold(
-            navigationSuiteItems = {
-                if (showBottomBar) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            KaiqiuNavHost(
+                navController = navController,
+                startDestination = Screen.Home.route,
+                modifier = if (showBottomBar) {
+                    Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+                } else {
+                    Modifier
+                }
+            )
+
+            if (showBottomBar) {
+                NavigationBar(
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                ) {
                     items.forEach { (route, label, icon) ->
-                        item(
+                        NavigationBarItem(
                             icon = { Icon(icon, contentDescription = label) },
                             label = { Text(label) },
                             selected = currentRoute == route,
@@ -84,11 +102,6 @@ fun KaiqiuApp() {
                     }
                 }
             }
-        ) {
-            KaiqiuNavHost(
-                navController = navController,
-                startDestination = Screen.Home.route
-            )
         }
     }
 }
